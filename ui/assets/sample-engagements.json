@@ -1,0 +1,366 @@
+[
+  {
+    "id": "eng-001",
+    "title": "Onboard ACME Corp to ESA",
+    "clientName": "ACME Corp",
+    "owner": "Alice Johnson",
+    "priority": "High",
+    "status": "In Progress",
+    "startDate": "2025-11-20",
+    "dueDate": "2026-01-10",
+    "tags": ["onboarding", "esa", "priority-high"],
+    "notes": "Kickoff complete; waiting for SSO approval.",
+    "tasks": [
+      {
+        "id": "task-001-a",
+        "title": "Provision ESA tenant",
+        "status": "Finished",
+        "assignee": "Alice Johnson",
+        "dueDate": "2025-11-22",
+        "notes": "Tenant created in US-East."
+      },
+      {
+        "id": "task-001-b",
+        "title": "Configure SSO (SAML)",
+        "status": "In Progress",
+        "assignee": "Bob Smith",
+        "dueDate": "2025-12-15",
+        "notes": "Metadata received; cert rotation planned."
+      },
+      {
+        "id": "task-001-c",
+        "title": "Set up user roles",
+        "status": "Not Started",
+        "assignee": "Carol Lee",
+        "dueDate": "2025-12-20",
+        "notes": "Waiting on client role matrix."
+      }
+    ]
+  },
+  {
+    "id": "eng-002",
+    "title": "ESA Analytics Rollout - Beta",
+    "clientName": "Globex",
+    "owner": "David Kim",
+    "priority": "Medium",
+    "status": "Stalled",
+    "startDate": "2025-10-02",
+    "dueDate": "2025-12-19",
+    "tags": ["analytics", "beta", "blocked"],
+    "notes": "Blocked on data export permissions.",
+    "tasks": [
+      {
+        "id": "task-002-a",
+        "title": "Define KPI dashboards",
+        "status": "Finished",
+        "assignee": "David Kim",
+        "dueDate": "2025-10-10",
+        "notes": "Approved by stakeholders."
+      },
+      {
+        "id": "task-002-b",
+        "title": "Data connector setup",
+        "status": "Stalled",
+        "assignee": "Eve Turner",
+        "dueDate": "2025-11-15",
+        "notes": "Customer security review pending."
+      },
+      {
+        "id": "task-002-c",
+        "title": "Pilot user training",
+        "status": "Not Started",
+        "assignee": "Frank Moore",
+        "dueDate": "2025-12-05",
+        "notes": "Training deck drafted."
+      }
+    ]
+  },
+  {
+    "id": "eng-003",
+    "title": "Migration from Legacy Reports",
+    "clientName": "Initech",
+    "owner": "Grace Chen",
+    "priority": "High",
+    "status": "Delivered",
+    "startDate": "2025-08-15",
+    "dueDate": "2025-11-30",
+    "tags": ["migration", "reports", "completed"],
+    "notes": "Post-migration validation passed.",
+    "tasks": [
+      {
+        "id": "task-003-a",
+        "title": "Inventory legacy reports",
+        "status": "Finished",
+        "assignee": "Grace Chen",
+        "dueDate": "2025-09-01",
+        "notes": "Cataloged 37 reports."
+      },
+      {
+        "id": "task-003-b",
+        "title": "Map to ESA equivalents",
+        "status": "Finished",
+        "assignee": "Henry Park",
+        "dueDate": "2025-10-10",
+        "notes": "Mapped 35/37; 2 consolidated."
+      },
+      {
+        "id": "task-003-c",
+        "title": "Cutover & validation",
+        "status": "Delivered",
+        "assignee": "Team",
+        "dueDate": "2025-11-28",
+        "notes": "Sign-off received from QA and client."
+      }
+    ]
+  },
+  {
+    "id": "eng-004",
+    "title": "ESA Performance Optimization",
+    "clientName": "Umbrella Co.",
+    "owner": "Ivan Petrov",
+    "priority": "Low",
+    "status": "Not Started",
+    "startDate": "2025-12-10",
+    "dueDate": "2026-02-01",
+    "tags": ["performance", "tuning"],
+    "notes": "Awaiting baseline loads from client.",
+    "tasks": [
+      {
+        "id": "task-004-a",
+        "title": "Baseline workload capture",
+        "status": "Not Started",
+        "assignee": "Ivan Petrov",
+        "dueDate": "2025-12-20",
+        "notes": "Target 2-week window."
+      },
+      {
+        "id": "task-004-b",
+        "title": "Profile dashboards",
+        "status": "Not Started",
+        "assignee": "Jill Taylor",
+        "dueDate": "2026-01-05",
+        "notes": "Focus on heavy filters."
+      }
+    ]
+  },
+  {
+    "id": "eng-005",
+    "title": "Security Hardening & Audit",
+    "clientName": "Soylent",
+    "owner": "Kevin Wu",
+    "priority": "High",
+    "status": "Finished",
+    "startDate": "2025-09-05",
+    "dueDate": "2025-12-01",
+    "tags": ["security", "audit"],
+    "notes": "Pending final audit report delivery.",
+    "tasks": [
+      {
+        "id": "task-005-a",
+        "title": "Enable MFA & review access",
+        "status": "Finished",
+        "assignee": "Kevin Wu",
+        "dueDate": "2025-09-20",
+        "notes": "All admins on MFA."
+      },
+      {
+        "id": "task-005-b",
+        "title": "Role-based access cleanup",
+        "status": "Finished",
+        "assignee": "Laura King",
+        "dueDate": "2025-10-12",
+        "notes": "Removed 12 stale accounts."
+      },
+      {
+        "id": "task-005-c",
+        "title": "Run vulnerability scan",
+        "status": "Finished",
+        "assignee": "Security Team",
+        "dueDate": "2025-11-10",
+        "notes": "No critical findings."
+      }
+    ]
+  },
+  {
+    "id": "eng-006",
+    "title": "Multi-tenant ESA Enablement",
+    "clientName": "Wayne Enterprises",
+    "owner": "Natalie Brooks",
+    "priority": "Medium",
+    "status": "In Progress",
+    "startDate": "2025-11-05",
+    "dueDate": "2026-02-15",
+    "tags": ["enablement", "multi-tenant", "training"],
+    "notes": "Two departments onboarded; finance pending approvals.",
+    "tasks": [
+      {
+        "id": "task-006-a",
+        "title": "Department A onboarding",
+        "status": "Finished",
+        "assignee": "Natalie Brooks",
+        "dueDate": "2025-11-20",
+        "notes": "Completed workshops."
+      },
+      {
+        "id": "task-006-b",
+        "title": "Department B onboarding",
+        "status": "In Progress",
+        "assignee": "Oscar Diaz",
+        "dueDate": "2025-12-22",
+        "notes": "Sessions scheduled."
+      },
+      {
+        "id": "task-006-c",
+        "title": "Finance approvals",
+        "status": "Stalled",
+        "assignee": "Procurement",
+        "dueDate": "2026-01-10",
+        "notes": "Awaiting budget sign-off."
+      }
+    ]
+  },
+  {
+    "id": "eng-007",
+    "title": "ESA Mobile Access Pilot",
+    "clientName": "Stark Industries",
+    "owner": "Priya Nair",
+    "priority": "Low",
+    "status": "Scheduled",
+    "startDate": "2025-12-12",
+    "dueDate": "2026-03-01",
+    "tags": ["mobile", "pilot"],
+    "notes": "Pilot cohort formed; kick-off next week.",
+    "tasks": [
+      {
+        "id": "task-007-a",
+        "title": "Define pilot cohort",
+        "status": "Finished",
+        "assignee": "Priya Nair",
+        "dueDate": "2025-12-10",
+        "notes": "10 users selected."
+      },
+      {
+        "id": "task-007-b",
+        "title": "Mobile auth configuration",
+        "status": "Not Started",
+        "assignee": "IT Mobile Team",
+        "dueDate": "2026-01-05",
+        "notes": "Pending app registration."
+      },
+      {
+        "id": "task-007-c",
+        "title": "Collect pilot feedback",
+        "status": "Not Started",
+        "assignee": "UX",
+        "dueDate": "2026-02-20",
+        "notes": "Create survey form."
+      }
+    ]
+  },
+  {
+    "id": "eng-008",
+    "title": "Compliance Reporting Enhancements",
+    "clientName": "Hooli",
+    "owner": "Quentin Shaw",
+    "priority": "High",
+    "status": "In Progress",
+    "startDate": "2025-09-18",
+    "dueDate": "2025-12-31",
+    "tags": ["compliance", "reporting", "regulatory"],
+    "notes": "New compliance regs require additional fields.",
+    "tasks": [
+      {
+        "id": "task-008-a",
+        "title": "Gap analysis",
+        "status": "Finished",
+        "assignee": "Compliance Team",
+        "dueDate": "2025-10-05",
+        "notes": "Identified 5 gaps."
+      },
+      {
+        "id": "task-008-b",
+        "title": "Implement fields",
+        "status": "In Progress",
+        "assignee": "Dev Team",
+        "dueDate": "2025-12-20",
+        "notes": "2 of 5 complete."
+      },
+      {
+        "id": "task-008-c",
+        "title": "Validation & audit",
+        "status": "Not Started",
+        "assignee": "QA",
+        "dueDate": "2025-12-28",
+        "notes": "Plan test cases."
+      }
+    ]
+  },
+  {
+    "id": "eng-009",
+    "title": "Service Desk Integration",
+    "clientName": "Pied Piper",
+    "owner": "Ron Alvarez",
+    "priority": "Medium",
+    "status": "Finished",
+    "startDate": "2025-07-01",
+    "dueDate": "2025-10-01",
+    "tags": ["integration", "servicedesk"],
+    "notes": "Integration deployed; awaiting extended monitoring.",
+    "tasks": [
+      {
+        "id": "task-009-a",
+        "title": "API mapping",
+        "status": "Finished",
+        "assignee": "Integration Team",
+        "dueDate": "2025-08-01",
+        "notes": "Endpoints documented."
+      },
+      {
+        "id": "task-009-b",
+        "title": "Webhook setup",
+        "status": "Finished",
+        "assignee": "Ops",
+        "dueDate": "2025-09-10",
+        "notes": "Retries configured."
+      }
+    ]
+  },
+  {
+    "id": "eng-010",
+    "title": "Executive Dashboard Refresh",
+    "clientName": "Vehement Capital Partners",
+    "owner": "Sara Mills",
+    "priority": "High",
+    "status": "Delivered",
+    "startDate": "2025-10-20",
+    "dueDate": "2025-12-12",
+    "tags": ["dashboard", "executive", "refresh"],
+    "notes": "Stakeholder sign-off complete; rollout done.",
+    "tasks": [
+      {
+        "id": "task-010-a",
+        "title": "Stakeholder interviews",
+        "status": "Finished",
+        "assignee": "Sara Mills",
+        "dueDate": "2025-11-05",
+        "notes": "Captured priorities."
+      },
+      {
+        "id": "task-010-b",
+        "title": "Dashboard redesign",
+        "status": "Finished",
+        "assignee": "Design Team",
+        "dueDate": "2025-12-01",
+        "notes": "New layout approved."
+      },
+      {
+        "id": "task-010-c",
+        "title": "Deployment",
+        "status": "Delivered",
+        "assignee": "DevOps",
+        "dueDate": "2025-12-12",
+        "notes": "Deployed to prod."
+      }
+    ]
+  }
+]

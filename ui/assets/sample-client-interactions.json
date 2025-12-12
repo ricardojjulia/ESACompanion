@@ -1,0 +1,246 @@
+[
+  {
+    "id": "ci-001",
+    "clientName": "ACME Corp",
+    "contactPerson": "Marta Rivera",
+    "type": "Meeting",
+    "status": "Completed",
+    "date": "2025-12-05",
+    "notes": "Quarterly roadmap review; positive feedback on ESA onboarding.",
+    "actionItems": [
+      { "text": "Share SSO config doc", "owner": "Bob Smith", "dueDate": "2025-12-12", "status": "In Progress" },
+      { "text": "Set role-mapping workshop", "owner": "Carol Lee", "dueDate": "2025-12-18", "status": "Not Started" }
+    ]
+  },
+  {
+    "id": "ci-002",
+    "clientName": "ACME Corp",
+    "contactPerson": "Marta Rivera",
+    "type": "Email",
+    "status": "Completed",
+    "date": "2025-12-11",
+    "notes": "Shared SSO doc; confirmed metadata import.",
+    "actionItems": [
+      { "text": "Confirm SSO metadata import", "owner": "Bob Smith", "dueDate": "2025-12-13", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-003",
+    "clientName": "Globex",
+    "contactPerson": "Tom Hardy",
+    "type": "Call",
+    "status": "Scheduled",
+    "date": "2025-12-07",
+    "notes": "Security team requested details on data connector scopes.",
+    "actionItems": [
+      { "text": "Provide connector scope list", "owner": "Eve Turner", "dueDate": "2025-12-09", "status": "In Progress" },
+      { "text": "Schedule follow-up review", "owner": "Tom Hardy", "dueDate": "2025-12-20", "status": "Not Started" }
+    ]
+  },
+  {
+    "id": "ci-004",
+    "clientName": "Globex",
+    "contactPerson": "Tom Hardy",
+    "type": "Follow-up",
+    "status": "Completed",
+    "date": "2025-12-03",
+    "notes": "Initial scope gathering for analytics rollout beta.",
+    "actionItems": [
+      { "text": "Gather dashboard requirements", "owner": "David Kim", "dueDate": "2025-12-10", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-005",
+    "clientName": "Initech",
+    "contactPerson": "Peter Gibbons",
+    "type": "Email",
+    "status": "Completed",
+    "date": "2025-11-29",
+    "notes": "Post-migration summary and validation results sent.",
+    "actionItems": [
+      { "text": "Attach validation report", "owner": "Grace Chen", "dueDate": "2025-11-29", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-006",
+    "clientName": "Initech",
+    "contactPerson": "Peter Gibbons",
+    "type": "Meeting",
+    "status": "Completed",
+    "date": "2025-12-02",
+    "notes": "Migration sign-off and cutover review.",
+    "actionItems": [
+      { "text": "Archive legacy reports", "owner": "Henry Park", "dueDate": "2025-12-08", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-007",
+    "clientName": "Umbrella Co.",
+    "contactPerson": "Alice Abernathy",
+    "type": "Follow-up",
+    "status": "Scheduled",
+    "date": "2025-12-10",
+    "notes": "Awaiting performance baseline dataset to begin tuning.",
+    "actionItems": [
+      { "text": "Request baseline export", "owner": "Ivan Petrov", "dueDate": "2025-12-15", "status": "In Progress" },
+      { "text": "Plan profiling session", "owner": "Jill Taylor", "dueDate": "2026-01-04", "status": "Not Started" }
+    ]
+  },
+  {
+    "id": "ci-008",
+    "clientName": "Umbrella Co.",
+    "contactPerson": "Alice Abernathy",
+    "type": "Call",
+    "status": "Completed",
+    "date": "2025-11-28",
+    "notes": "Initial optimization scope and timeline discussion.",
+    "actionItems": [
+      { "text": "Confirm workload profile", "owner": "Ivan Petrov", "dueDate": "2025-12-05", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-009",
+    "clientName": "Soylent",
+    "contactPerson": "Charlene Yang",
+    "type": "Review",
+    "status": "Completed",
+    "date": "2025-12-01",
+    "notes": "Security audit review; no critical issues found.",
+    "actionItems": [
+      { "text": "Deliver final audit report", "owner": "Kevin Wu", "dueDate": "2025-12-08", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-010",
+    "clientName": "Soylent",
+    "contactPerson": "Charlene Yang",
+    "type": "Email",
+    "status": "Completed",
+    "date": "2025-12-09",
+    "notes": "Shared final security hardening recommendations.",
+    "actionItems": [
+      { "text": "Implement MFA policies", "owner": "Kevin Wu", "dueDate": "2025-12-15", "status": "In Progress" }
+    ]
+  },
+  {
+    "id": "ci-011",
+    "clientName": "Wayne Enterprises",
+    "contactPerson": "Lucius Fox",
+    "type": "Meeting",
+    "status": "Completed",
+    "date": "2025-11-10",
+    "notes": "Department A enablement kick-off.",
+    "actionItems": [
+      { "text": "Share workshop materials", "owner": "Natalie Brooks", "dueDate": "2025-11-15", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-012",
+    "clientName": "Wayne Enterprises",
+    "contactPerson": "Lucius Fox",
+    "type": "Follow-up",
+    "status": "Scheduled",
+    "date": "2025-12-09",
+    "notes": "Finance approval update requested.",
+    "actionItems": [
+      { "text": "Send approval memo", "owner": "Procurement", "dueDate": "2025-12-14", "status": "In Progress" }
+    ]
+  },
+  {
+    "id": "ci-013",
+    "clientName": "Stark Industries",
+    "contactPerson": "Pepper Potts",
+    "type": "Meeting",
+    "status": "Scheduled",
+    "date": "2025-12-15",
+    "notes": "Mobile pilot kickoff and scope alignment.",
+    "actionItems": [
+      { "text": "Confirm mobile device policy", "owner": "IT Mobile Team", "dueDate": "2025-12-16", "status": "Not Started" },
+      { "text": "Share pilot schedule", "owner": "Priya Nair", "dueDate": "2025-12-16", "status": "Not Started" }
+    ]
+  },
+  {
+    "id": "ci-014",
+    "clientName": "Stark Industries",
+    "contactPerson": "Pepper Potts",
+    "type": "Email",
+    "status": "Completed",
+    "date": "2025-12-08",
+    "notes": "Shared pilot cohort selection and requirements.",
+    "actionItems": [
+      { "text": "Finalize pilot users", "owner": "Priya Nair", "dueDate": "2025-12-10", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-015",
+    "clientName": "Hooli",
+    "contactPerson": "Gavin Belson",
+    "type": "Review",
+    "status": "Completed",
+    "date": "2025-12-02",
+    "notes": "Compliance gap analysis review session.",
+    "actionItems": [
+      { "text": "Attach gap report", "owner": "Compliance Team", "dueDate": "2025-12-02", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-016",
+    "clientName": "Hooli",
+    "contactPerson": "Gavin Belson",
+    "type": "Call",
+    "status": "Scheduled",
+    "date": "2025-12-14",
+    "notes": "Compliance enhancements field implementation review.",
+    "actionItems": [
+      { "text": "Validate implementation", "owner": "Dev Team", "dueDate": "2025-12-20", "status": "In Progress" }
+    ]
+  },
+  {
+    "id": "ci-017",
+    "clientName": "Pied Piper",
+    "contactPerson": "Richard Hendricks",
+    "type": "Call",
+    "status": "Completed",
+    "date": "2025-11-25",
+    "notes": "Service desk integration post-mortem call.",
+    "actionItems": [
+      { "text": "Share post-mortem doc", "owner": "Integration Team", "dueDate": "2025-11-26", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-018",
+    "clientName": "Pied Piper",
+    "contactPerson": "Richard Hendricks",
+    "type": "Email",
+    "status": "Completed",
+    "date": "2025-10-05",
+    "notes": "Integration API mapping and webhook documentation.",
+    "actionItems": [
+      { "text": "Review endpoint docs", "owner": "Richard Hendricks", "dueDate": "2025-10-10", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-019",
+    "clientName": "Vehement Capital Partners",
+    "contactPerson": "Elena Richardson",
+    "type": "Review",
+    "status": "Completed",
+    "date": "2025-12-12",
+    "notes": "Executive dashboard rollout review.",
+    "actionItems": [
+      { "text": "Confirm final KPI set", "owner": "Sara Mills", "dueDate": "2025-12-13", "status": "Finished" }
+    ]
+  },
+  {
+    "id": "ci-020",
+    "clientName": "Vehement Capital Partners",
+    "contactPerson": "Elena Richardson",
+    "type": "Meeting",
+    "status": "Completed",
+    "date": "2025-11-15",
+    "notes": "Stakeholder interviews for dashboard refresh requirements.",
+    "actionItems": [
+      { "text": "Capture design priorities", "owner": "Sara Mills", "dueDate": "2025-11-20", "status": "Finished" }
+    ]
+  }
+]
