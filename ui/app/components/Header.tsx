@@ -35,27 +35,23 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, userName, isManager })
       </AppHeader.NavItems>
       <AppHeader.ActionItems>
         {userName && (
-          <AppHeader.ActionItem>
-            <span style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '12px' }}>
-              {userName}
-            </span>
-          </AppHeader.ActionItem>
+          <span style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '12px' }}>
+            {userName}
+          </span>
         )}
-        <AppHeader.ActionItem>
-          <button
-            onClick={onLogout}
-            style={{
-              padding: '6px 10px',
-              borderRadius: '6px',
-              border: '1px solid var(--dt-colors-border-container-default)',
-              backgroundColor: 'var(--dt-colors-surface-default)',
-              cursor: 'pointer',
-              fontSize: '12px'
-            }}
-          >
-            Logout
-          </button>
-        </AppHeader.ActionItem>
+        <button
+          onClick={onLogout}
+          style={{
+            padding: '6px 10px',
+            borderRadius: '6px',
+            border: '1px solid var(--dt-colors-border-container-default)',
+            backgroundColor: 'var(--dt-colors-surface-default)',
+            cursor: 'pointer',
+            fontSize: '12px'
+          }}
+        >
+          Logout
+        </button>
       </AppHeader.ActionItems>
     </AppHeader>
   );
