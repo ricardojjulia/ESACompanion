@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 interface SplashScreenProps {
-  onAuthenticated: () => void;
+  onAuthenticated: (isManager: boolean) => void;
   userName?: string; // optional, passed by App.tsx
 }
 
@@ -22,11 +22,22 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
   };
   const userEmail = getUserEmail();
 
-  const validatePassword = (input: string): boolean => {
+  const validatePassword = (input: string): { isValid: boolean; isManager: boolean } => {
     const digits = input.match(/\d/g);
-    if (!digits || digits.length === 0) return false;
+    if (!digits || digits.length === 0) return { isValid: false, isManager: false };
     const sum = digits.reduce((acc, d) => acc + parseInt(d, 10), 0);
-    return sum === 30;
+    const hasUpperM = /[M]/.test(input);
+    const sumValid = sum === 30;
+    
+    // Manager: needs uppercase M AND sum to 30
+    if (hasUpperM && sumValid) {
+      return { isValid: true, isManager: true };
+    }
+    // Regular user: just needs sum to 30
+    if (sumValid) {
+      return { isValid: true, isManager: false };
+    }
+    return { isValid: false, isManager: false };
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,12 +47,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
       setError('Please enter a password');
       return;
     }
-    if (!validatePassword(password)) {
-      setError('Invalid password. The digits must sum to 30.');
+    const validation = validatePassword(password);
+    if (!validation.isValid) {
+      setError('Invalid password. The digits must sum to 30. Add uppercase M for manager access.');
       return;
     }
     setIsValidating(true);
-    setTimeout(() => onAuthenticated(), 800);
+    setTimeout(() => onAuthenticated(validation.isManager), 800);
   };
 
   return (

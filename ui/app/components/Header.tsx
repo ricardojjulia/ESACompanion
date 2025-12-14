@@ -5,9 +5,10 @@ import { AppHeader } from "@dynatrace/strato-components-preview/layouts";
 interface HeaderProps {
   onLogout?: () => void;
   userName?: string;
+  isManager?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onLogout, userName }) => {
+export const Header: React.FC<HeaderProps> = ({ onLogout, userName, isManager }) => {
   return (
     <AppHeader>
       <AppHeader.NavItems>
@@ -21,6 +22,16 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, userName }) => {
         <AppHeader.NavItem as={Link} to="/analytics">
           Analytics V2.0
         </AppHeader.NavItem>
+        {isManager && (
+          <>
+            <AppHeader.NavItem as={Link} to="/resources">
+              ESA Resources
+            </AppHeader.NavItem>
+            <AppHeader.NavItem as={Link} to="/reports">
+              Reports
+            </AppHeader.NavItem>
+          </>
+        )}
       </AppHeader.NavItems>
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '12px' }}>
         {userName && (
