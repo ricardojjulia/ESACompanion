@@ -79,7 +79,7 @@ export const App = () => {
           </div>
         )}
         <Routes>
-          <Route path="/" element={<Home onLogout={handleLogout} />} />
+          <Route path="/" element={<Home onLogout={handleLogout} isManager={isManager} />} />
           <Route path="/engagements" element={<Engagements />} />
           <Route path="/clients" element={<ClientManagement />} />
           <Route path="/analytics" element={<AnalyticsV2 />} />
