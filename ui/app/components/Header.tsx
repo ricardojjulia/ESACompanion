@@ -13,22 +13,28 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, userName, isManager })
     <AppHeader>
       <AppHeader.NavItems>
         <AppHeader.AppNavLink as={Link} to="/" />
-        <AppHeader.NavItem as={Link} to="/engagements">
-          Engagement Management
-        </AppHeader.NavItem>
-        <AppHeader.NavItem as={Link} to="/clients">
-          Client Management
-        </AppHeader.NavItem>
-        <AppHeader.NavItem as={Link} to="/analytics">
-          Analytics V2.0
-        </AppHeader.NavItem>
-        {isManager && (
+        {isManager ? (
           <>
             <AppHeader.NavItem as={Link} to="/resources">
               ESA Resources
             </AppHeader.NavItem>
             <AppHeader.NavItem as={Link} to="/reports">
-              Reports
+              Team Reports
+            </AppHeader.NavItem>
+            <AppHeader.NavItem as={Link} to="/analytics">
+              Analytics V2.0
+            </AppHeader.NavItem>
+          </>
+        ) : (
+          <>
+            <AppHeader.NavItem as={Link} to="/engagements">
+              Engagement Management
+            </AppHeader.NavItem>
+            <AppHeader.NavItem as={Link} to="/clients">
+              Client Management
+            </AppHeader.NavItem>
+            <AppHeader.NavItem as={Link} to="/analytics">
+              Analytics V2.0
             </AppHeader.NavItem>
           </>
         )}
