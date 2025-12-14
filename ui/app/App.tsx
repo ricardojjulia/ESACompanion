@@ -63,7 +63,7 @@ export const App = () => {
       </Page.Header>
       <Page.Main>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home onLogout={handleLogout} />} />
           <Route path="/engagements" element={<Engagements />} />
           <Route path="/clients" element={<ClientManagement />} />
           <Route path="/analytics" element={<AnalyticsV2 />} />

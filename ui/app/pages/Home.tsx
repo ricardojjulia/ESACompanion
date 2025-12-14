@@ -13,7 +13,11 @@ interface EngagementMetrics {
   loading: boolean;
 }
 
-export const Home = () => {
+interface HomeProps {
+  onLogout?: () => void;
+}
+
+export const Home = ({ onLogout }: HomeProps) => {
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [showESATasks, setShowESATasks] = useState(false);
   const [metrics, setMetrics] = useState<EngagementMetrics>({
@@ -302,6 +306,24 @@ export const Home = () => {
           >
             🔄 Refresh
           </button>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid #ef4444',
+                backgroundColor: 'transparent',
+                color: '#ef4444',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 500,
+              }}
+              title="Sign out"
+            >
+              🚪 Logout
+            </button>
+          )}
         </div>
       </div>
 
