@@ -65,6 +65,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#0a0e27', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: '420px', background: '#0b1220', border: '1px solid #334155', borderRadius: '12px', padding: '24px', boxShadow: '0 12px 40px rgba(0,0,0,0.35)' }}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Visually hidden username field to satisfy accessibility guidance */}
+          <input type="text" name="username" autoComplete="username" style={{ position: 'absolute', left: '-9999px', width: 0, height: 0, opacity: 0 }} aria-hidden="true" tabIndex={-1} />
           <div style={{ fontWeight: 600, color: '#e2e8f0', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Security Password</div>
           <input
             type="password"

@@ -14,6 +14,7 @@ export const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isManager, setIsManager] = useState(false);
   const [userName, setUserName] = useState("Guest User");
+  const [showManagerToast, setShowManagerToast] = useState(false);
 
   // Check if user is already authenticated
   useEffect(() => {
@@ -46,6 +47,10 @@ export const App = () => {
     sessionStorage.setItem("esaAuthenticated", "true");
     sessionStorage.setItem("esaUser", userName);
     sessionStorage.setItem("esaManager", String(isManagerMode));
+    if (isManagerMode) {
+      setShowManagerToast(true);
+      setTimeout(() => setShowManagerToast(false), 3000);
+    }
   };
 
   const handleLogout = () => {
@@ -68,6 +73,11 @@ export const App = () => {
         <Header onLogout={handleLogout} userName={userName} isManager={isManager} />
       </Page.Header>
       <Page.Main>
+        {showManagerToast && (
+          <div style={{ position: 'fixed', top: 12, right: 12, background: '#0b1220', color: '#64c8ff', border: '1px solid #334155', borderRadius: 8, padding: '8px 12px', zIndex: 1000 }}>
+            Manager Mode Active
+          </div>
+        )}
         <Routes>
           <Route path="/" element={<Home onLogout={handleLogout} />} />
           <Route path="/engagements" element={<Engagements />} />
