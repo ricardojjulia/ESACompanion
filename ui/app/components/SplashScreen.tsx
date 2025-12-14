@@ -68,6 +68,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
           <div style={{ fontWeight: 600, color: '#e2e8f0', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Security Password</div>
           <input
             type="password"
+            autoComplete="new-password"
             placeholder="Enter digits that sum to 30"
             value={password}
             onChange={(e) => { setPassword(e.target.value); setError(''); }}
