@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, userName, isManager })
           </>
         )}
       </AppHeader.NavItems>
-      <AppHeader.Actions>
+      <AppHeader.ActionItems>
         {userName && (
           <AppHeader.ActionItem>
             <span style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '12px' }}>
@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, userName, isManager })
             Logout
           </button>
         </AppHeader.ActionItem>
-      </AppHeader.Actions>
+      </AppHeader.ActionItems>
     </AppHeader>
   );
 };
