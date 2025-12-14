@@ -29,12 +29,16 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
     const hasUpperM = /[M]/.test(input);
     const sumValid = sum === 30;
     
+    console.log("Password validation:", { input, hasUpperM, sum, sumValid });
+    
     // Manager: needs uppercase M AND sum to 30
     if (hasUpperM && sumValid) {
+      console.log("Validated as MANAGER");
       return { isValid: true, isManager: true };
     }
     // Regular user: just needs sum to 30
     if (sumValid) {
+      console.log("Validated as REGULAR USER");
       return { isValid: true, isManager: false };
     }
     return { isValid: false, isManager: false };
@@ -52,6 +56,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
       setError('Invalid password. The digits must sum to 30. Add uppercase M for manager access.');
       return;
     }
+    console.log("Calling onAuthenticated with isManager:", validation.isManager);
     setIsValidating(true);
     setTimeout(() => onAuthenticated(validation.isManager), 800);
   };
@@ -59,10 +64,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#0a0e27', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: '420px', background: '#0b1220', border: '1px solid #334155', borderRadius: '12px', padding: '24px', boxShadow: '0 12px 40px rgba(0,0,0,0.35)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
-          <div style={{ color: '#94a3b8', fontSize: '13px' }}>Current user</div>
-          <div style={{ color: '#e2e8f0', fontSize: '13px', fontWeight: 600 }}>{userEmail}</div>
-        </div>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ fontWeight: 600, color: '#e2e8f0', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Security Password</div>
           <input

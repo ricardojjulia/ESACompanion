@@ -15,9 +15,10 @@ interface EngagementMetrics {
 
 interface HomeProps {
   onLogout?: () => void;
+  isManager?: boolean;
 }
 
-export const Home = ({ onLogout }: HomeProps) => {
+export const Home = ({ onLogout, isManager }: HomeProps) => {
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [showESATasks, setShowESATasks] = useState(false);
   const [metrics, setMetrics] = useState<EngagementMetrics>({
@@ -34,7 +35,7 @@ export const Home = ({ onLogout }: HomeProps) => {
   useEffect(() => {
     const loadEngagementMetrics = () => {
       try {
-        // Load engagements from localStorage (safe parse)
+
         const storedEngagements = localStorage.getItem('esa-engagements');
         let engagements: any[] = [];
         if (storedEngagements) {
@@ -286,9 +287,25 @@ export const Home = ({ onLogout }: HomeProps) => {
     <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: '32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Heading level={1} style={{ marginBottom: '8px' }}>
-          ESA Companion Dashboard
-        </Heading>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <Heading level={1} style={{ marginBottom: '4px' }}>
+            ESA Companion Dashboard
+          </Heading>
+          {isManager && (
+            <div style={{
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#1f2937',
+              backgroundColor: 'var(--dt-colors-surface-selected)',
+              border: '1px solid var(--dt-colors-border-container-default)',
+              borderRadius: '6px',
+              padding: '6px 8px',
+              width: 'fit-content'
+            }}>
+              Manager Mode Active
+            </div>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <p style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '14px', margin: 0 }}>
             Overview of your engagements and task progress

@@ -34,7 +34,13 @@ export const App = () => {
     }
   }, []);
 
+  // Debug: log when isManager changes
+  useEffect(() => {
+    console.log("Manager state changed:", isManager);
+  }, [isManager]);
+
   const handleAuthentication = (isManagerMode: boolean) => {
+    console.log("Authenticating with manager mode:", isManagerMode);
     setIsAuthenticated(true);
     setIsManager(isManagerMode);
     sessionStorage.setItem("esaAuthenticated", "true");
