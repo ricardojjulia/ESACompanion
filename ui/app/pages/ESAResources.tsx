@@ -13,7 +13,58 @@ interface Resource {
   updatedAt: string;
 }
 
+interface ESAUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  appId: string;
+  createdAt: string;
+}
+
 export const ESAResources = () => {
+  const [users, setUsers] = useState<ESAUser[]>(() => {
+    try {
+      const stored = localStorage.getItem('esa-users');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const persistUsers = (next: ESAUser[]) => {
+    setUsers(next);
+    localStorage.setItem('esa-users', JSON.stringify(next));
+  };
+
+  const [newUser, setNewUser] = useState({ firstName: '', lastName: '' });
+
+  const generateAppId = () => {
+    return `APP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+  };
+
+  const handleCreateUser = () => {
+    if (!newUser.firstName.trim() || !newUser.lastName.trim()) {
+      alert('First Name and Last Name are required');
+      return;
+    }
+
+    let appId = generateAppId();
+    const existingAppIds = new Set(users.map((u) => u.appId));
+    while (existingAppIds.has(appId)) {
+      appId = generateAppId();
+    }
+
+    const created: ESAUser = {
+      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+      firstName: newUser.firstName.trim(),
+      lastName: newUser.lastName.trim(),
+      appId,
+      createdAt: new Date().toISOString(),
+    };
+
+    persistUsers([...users, created]);
+    setNewUser({ firstName: '', lastName: '' });
+  };
   const [resources, setResources] = useState<Resource[]>([
     {
       id: '1',
@@ -130,6 +181,91 @@ export const ESAResources = () => {
           </Paragraph>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>+ Add Resource</Button>
+      </div>
+
+      {/* User creation panel */}
+      <div
+        style={{
+          marginBottom: '32px',
+          padding: '20px',
+          border: '1px solid var(--dt-colors-border-container-default)',
+          borderRadius: '10px',
+          backgroundColor: 'var(--dt-colors-surface-container-default)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <Heading level={3} style={{ margin: 0 }}>Create Users</Heading>
+          <div style={{ fontSize: '12px', color: 'var(--dt-colors-text-secondary)' }}>APPID is auto-generated and unique</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600 }}>First Name *</label>
+            <input
+              type="text"
+              value={newUser.firstName}
+              onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
+              placeholder="First name"
+              style={{ padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600 }}>Last Name *</label>
+            <input
+              type="text"
+              value={newUser.lastName}
+              onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
+              placeholder="Last name"
+              style={{ padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600 }}>APPID (auto)</label>
+            <input
+              type="text"
+              value={newUser.firstName || newUser.lastName ? 'Will be generated' : ''}
+              placeholder="Will be generated"
+              readOnly
+              style={{ padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '14px', background: 'var(--dt-colors-surface-raised)' }}
+            />
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+          <Button variant="secondary" onClick={() => setNewUser({ firstName: '', lastName: '' })}>Clear</Button>
+          <Button onClick={handleCreateUser}>Create User</Button>
+        </div>
+
+        {/* Users list */}
+        <div style={{ marginTop: '16px' }}>
+          <Heading level={4} style={{ marginBottom: '8px' }}>Configured Users</Heading>
+          {users.length === 0 ? (
+            <Paragraph style={{ color: 'var(--dt-colors-text-secondary)' }}>No users configured yet.</Paragraph>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '520px' }}>
+                <thead>
+                  <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--dt-colors-border-container-default)' }}>
+                    <th style={{ padding: '8px 6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>First Name</th>
+                    <th style={{ padding: '8px 6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Last Name</th>
+                    <th style={{ padding: '8px 6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>APPID</th>
+                    <th style={{ padding: '8px 6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u) => (
+                    <tr key={u.id} style={{ borderBottom: '1px solid var(--dt-colors-border-container-default)' }}>
+                      <td style={{ padding: '10px 6px', fontSize: '13px' }}>{u.firstName}</td>
+                      <td style={{ padding: '10px 6px', fontSize: '13px' }}>{u.lastName}</td>
+                      <td style={{ padding: '10px 6px', fontSize: '13px', fontFamily: 'monospace' }}>{u.appId}</td>
+                      <td style={{ padding: '10px 6px', fontSize: '12px', color: 'var(--dt-colors-text-secondary)' }}>
+                        {new Date(u.createdAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {resources.length === 0 ? (
