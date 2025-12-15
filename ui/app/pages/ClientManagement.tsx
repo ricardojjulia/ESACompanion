@@ -217,6 +217,7 @@ export const ClientManagement = ({ userAppId, isManager }: { userAppId: string |
                       actionItems,
                       status,
                       createdAt: i.createdAt || new Date().toISOString(),
+                      appId: userAppId || undefined, // Tag imported interactions with current user's appId
                     };
                   });
                   setInteractions(normalized);
