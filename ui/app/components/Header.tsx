@@ -21,9 +21,6 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, userName, isManager })
             <AppHeader.NavItem as={Link} to="/reports">
               Team Reports
             </AppHeader.NavItem>
-            <AppHeader.NavItem as={Link} to="/analytics">
-              Analytics V2.0
-            </AppHeader.NavItem>
           </>
         ) : (
           <>
