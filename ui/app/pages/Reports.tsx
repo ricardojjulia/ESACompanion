@@ -50,11 +50,35 @@ export const Reports = () => {
     const interactions: any[] = storedInteractions ? JSON.parse(storedInteractions) : [];
     console.log('📊 Team Reports - Loaded engagements:', engagements);
     console.log('📊 Team Reports - Loaded interactions:', interactions);
+    
+    // Check how many items have appId vs don't have appId
+    const engagementsWithAppId = engagements.filter(e => e.appId);
+    const engagementsWithoutAppId = engagements.filter(e => !e.appId);
+    const interactionsWithAppId = interactions.filter(i => i.appId);
+    const interactionsWithoutAppId = interactions.filter(i => !i.appId);
+    
+    console.log('📊 Team Reports - Engagements with appId:', engagementsWithAppId.length, 'without appId:', engagementsWithoutAppId.length);
+    console.log('📊 Team Reports - Interactions with appId:', interactionsWithAppId.length, 'without appId:', interactionsWithoutAppId.length);
 
     // Calculate metrics per user
     const metrics: UserMetrics[] = parsedUsers.map((user) => {
-      const userEngagements = engagements.filter((e) => e.appId === user.appId);
-      const userInteractions = interactions.filter((i) => i.appId === user.appId);
+      // Match by appId if present, otherwise include all untagged data
+      const userEngagements = engagements.filter((e) => {
+        if (e.appId) {
+          return e.appId === user.appId;
+        }
+        // If no appId, include it (legacy data) - it will be attributed to the first user for now
+        return false; // Don't include untagged data to avoid duplication
+      });
+      
+      const userInteractions = interactions.filter((i) => {
+        if (i.appId) {
+          return i.appId === user.appId;
+        }
+        return false; // Don't include untagged data
+      });
+      
+      console.log(`📊 Team Reports - User ${user.firstName} ${user.lastName} (${user.appId}): ${userEngagements.length} engagements, ${userInteractions.length} interactions`);
 
       let totalTasks = 0;
       let tasksNotStarted = 0;

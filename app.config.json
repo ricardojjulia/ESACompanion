@@ -3,7 +3,7 @@
   "environmentUrl": "https://nyw40909.apps.dynatrace.com/",
   "app": {
     "name": "ESA Companion",
-    "version": "0.8.16",
+    "version": "0.8.17",
     "description": "A starting project with routing, fetching data, and charting",
     "id": "my.esa.companion",
     "scopes": [
