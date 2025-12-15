@@ -85,6 +85,7 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
           clientName: String(eng.clientName ?? eng.client ?? 'Unknown Client'),
           description: String(eng.description ?? eng.notes ?? ''),
           createdAt: String(eng.createdAt ?? new Date().toISOString()),
+          appId: userAppId || undefined, // Tag imported data with current user's appId
           tasks: Array.isArray(eng.tasks) ? eng.tasks.map((t: any) => ({
             id: String(t.id ?? `task-${Date.now()}`),
             engagementId: String(eng.id ?? `eng-${Date.now()}`),
