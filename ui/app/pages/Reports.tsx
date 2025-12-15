@@ -37,6 +37,7 @@ export const Reports = () => {
     // Load configured users
     const storedUsers = localStorage.getItem('esa-users');
     const parsedUsers: ESAUser[] = storedUsers ? JSON.parse(storedUsers) : [];
+    console.log('📊 Team Reports - Loaded users:', parsedUsers);
     setUsers(parsedUsers);
 
     // Load engagements and interactions
@@ -45,6 +46,8 @@ export const Reports = () => {
     
     const engagements: any[] = storedEngagements ? JSON.parse(storedEngagements) : [];
     const interactions: any[] = storedInteractions ? JSON.parse(storedInteractions) : [];
+    console.log('📊 Team Reports - Loaded engagements:', engagements);
+    console.log('📊 Team Reports - Loaded interactions:', interactions);
 
     // Calculate metrics per user
     const metrics: UserMetrics[] = parsedUsers.map((user) => {
@@ -101,6 +104,7 @@ export const Reports = () => {
       };
     });
 
+    console.log('📊 Team Reports - Calculated metrics:', metrics);
     setUserMetrics(metrics);
     if (metrics.length > 0) {
       setSelectedUserAppId(metrics[0].appId);
