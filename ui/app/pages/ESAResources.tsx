@@ -230,7 +230,7 @@ export const ESAResources = () => {
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-          <Button variant="secondary" onClick={() => setNewUser({ firstName: '', lastName: '' })}>Clear</Button>
+          <Button variant="default" onClick={() => setNewUser({ firstName: '', lastName: '' })}>Clear</Button>
           <Button onClick={handleCreateUser}>Create User</Button>
         </div>
 
