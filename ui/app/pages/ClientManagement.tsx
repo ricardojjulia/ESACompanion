@@ -220,8 +220,17 @@ export const ClientManagement = ({ userAppId, isManager }: { userAppId: string |
                       appId: userAppId || undefined, // Tag imported interactions with current user's appId
                     };
                   });
-                  setInteractions(normalized);
-                  localStorage.setItem('esa-client-interactions', JSON.stringify(normalized));
+                  
+                  // Merge with existing interactions from localStorage instead of replacing
+                  const existingInteractions = JSON.parse(localStorage.getItem('esa-client-interactions') || '[]');
+                  const existingIds = new Set(existingInteractions.map((i: any) => i.id));
+                  
+                  // Only add interactions that don't already exist (by ID)
+                  const newInteractions = normalized.filter(i => !existingIds.has(i.id));
+                  const mergedInteractions = [...existingInteractions, ...newInteractions];
+                  
+                  setInteractions(mergedInteractions);
+                  localStorage.setItem('esa-client-interactions', JSON.stringify(mergedInteractions));
                   
                   // Ensure clients exist for imported interactions
                   const storedClients = localStorage.getItem('esa-clients');
@@ -244,7 +253,7 @@ export const ClientManagement = ({ userAppId, isManager }: { userAppId: string |
                     localStorage.setItem('esa-clients', JSON.stringify(clientsObj));
                   }
                   
-                  setImportMessage(`Imported ${normalized.length} interaction(s) successfully.`);
+                  setImportMessage(`Imported ${newInteractions.length} new interaction(s) successfully. (${normalized.length - newInteractions.length} duplicates skipped)`);
                 } catch (err) {
                   alert('Failed to import interactions JSON. Please check the file format.');
                   console.error(err);

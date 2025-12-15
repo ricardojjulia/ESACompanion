@@ -99,10 +99,19 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
         // Require clientName for all engagements
         const invalid = normalized.find((e) => !e.clientName || e.clientName.trim().length === 0);
         if (invalid) throw new Error('Invalid engagement schema: each engagement must include a clientName');
-        setEngagements(normalized);
-        localStorage.setItem('esa-engagements', JSON.stringify(normalized));
+        
+        // Merge with existing engagements from localStorage instead of replacing
+        const existingEngagements = JSON.parse(localStorage.getItem('esa-engagements') || '[]');
+        const existingIds = new Set(existingEngagements.map((e: any) => e.id));
+        
+        // Only add engagements that don't already exist (by ID)
+        const newEngagements = normalized.filter(e => !existingIds.has(e.id));
+        const mergedEngagements = [...existingEngagements, ...newEngagements];
+        
+        setEngagements(mergedEngagements);
+        localStorage.setItem('esa-engagements', JSON.stringify(mergedEngagements));
         setSelectedEngagement(normalized[0] || null);
-        setImportMessage(`Imported ${normalized.length} engagement(s) successfully.`);
+        setImportMessage(`Imported ${newEngagements.length} new engagement(s) successfully. (${normalized.length - newEngagements.length} duplicates skipped)`);
 
         // Ensure clients exist for imported engagements
         const storedClients = localStorage.getItem('esa-clients');
