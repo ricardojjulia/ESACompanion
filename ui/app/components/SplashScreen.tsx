@@ -23,24 +23,40 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
   const userEmail = getUserEmail();
 
   const validatePassword = (input: string): { isValid: boolean; isManager: boolean } => {
+    // Load configured users (APPIDs) from localStorage
+    let users: any[] = [];
+    try {
+      const stored = localStorage.getItem('esa-users');
+      users = stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      users = [];
+    }
+
+    const appIds = users.map((u: any) => u.appId);
+    
+    // Check if input matches any configured APPID
+    const isValidAppId = appIds.includes(input);
+    
     const digits = input.match(/\d/g);
-    if (!digits || digits.length === 0) return { isValid: false, isManager: false };
-    const sum = digits.reduce((acc, d) => acc + parseInt(d, 10), 0);
+    const hasDigits = digits && digits.length > 0;
+    const sum = hasDigits ? digits.reduce((acc, d) => acc + parseInt(d, 10), 0) : 0;
     const hasUpperM = /[M]/.test(input);
     const sumValid = sum === 30;
     
-    console.log("Password validation:", { input, hasUpperM, sum, sumValid });
+    console.log("Password validation:", { input, hasUpperM, sum, sumValid, isValidAppId, availableAppIds: appIds });
     
     // Manager: needs uppercase M AND sum to 30
     if (hasUpperM && sumValid) {
       console.log("Validated as MANAGER");
       return { isValid: true, isManager: true };
     }
-    // Regular user: just needs sum to 30
-    if (sumValid) {
-      console.log("Validated as REGULAR USER");
+    
+    // Regular user: must use configured APPID
+    if (isValidAppId) {
+      console.log("Validated as REGULAR USER (APPID match)");
       return { isValid: true, isManager: false };
     }
+    
     return { isValid: false, isManager: false };
   };
 
@@ -53,7 +69,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
     }
     const validation = validatePassword(password);
     if (!validation.isValid) {
-      setError('Invalid password. The digits must sum to 30. Add uppercase M for manager access.');
+      setError('Invalid credentials. Use a configured APPID or manager password (M + digits = 30).');
       return;
     }
     console.log("Calling onAuthenticated with isManager:", validation.isManager);
