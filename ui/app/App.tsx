@@ -13,6 +13,7 @@ import { SplashScreen } from "./components/SplashScreen";
 export const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isManager, setIsManager] = useState(false);
+  const [userAppId, setUserAppId] = useState<string | null>(null);
   const [userName, setUserName] = useState("Guest User");
   const [showManagerToast, setShowManagerToast] = useState(false);
 
@@ -21,16 +22,16 @@ export const App = () => {
     const isAuth = sessionStorage.getItem("esaAuthenticated");
     const user = sessionStorage.getItem("esaUser");
     const manager = sessionStorage.getItem("esaManager") === "true";
+    const appId = sessionStorage.getItem("esaAppId");
 
     if (isAuth === "true") {
       setIsAuthenticated(true);
       setIsManager(manager);
+      if (appId) setUserAppId(appId);
       if (user) {
         setUserName(user);
       }
     } else {
-      // Try to get current user from Dynatrace API (simulated here)
-      // In a real app, you'd call the Dynatrace User API
       setUserName("ESA Admin");
     }
   }, []);
@@ -40,13 +41,17 @@ export const App = () => {
     console.log("Manager state changed:", isManager);
   }, [isManager]);
 
-  const handleAuthentication = (isManagerMode: boolean) => {
-    console.log("Authenticating with manager mode:", isManagerMode);
+  const handleAuthentication = (isManagerMode: boolean, appId?: string | null) => {
+    console.log("Authenticating with manager mode:", isManagerMode, "appId:", appId);
     setIsAuthenticated(true);
     setIsManager(isManagerMode);
+    setUserAppId(appId || null);
     sessionStorage.setItem("esaAuthenticated", "true");
     sessionStorage.setItem("esaUser", userName);
     sessionStorage.setItem("esaManager", String(isManagerMode));
+    if (appId) {
+      sessionStorage.setItem("esaAppId", appId);
+    }
     if (isManagerMode) {
       setShowManagerToast(true);
       setTimeout(() => setShowManagerToast(false), 3000);
@@ -57,8 +62,10 @@ export const App = () => {
     sessionStorage.removeItem("esaAuthenticated");
     sessionStorage.removeItem("esaUser");
     sessionStorage.removeItem("esaManager");
+    sessionStorage.removeItem("esaAppId");
     setIsAuthenticated(false);
     setIsManager(false);
+    setUserAppId(null);
   };
 
   // Show splash screen if not authenticated
@@ -80,8 +87,8 @@ export const App = () => {
         )}
         <Routes>
           <Route path="/" element={<Home onLogout={handleLogout} isManager={isManager} />} />
-          <Route path="/engagements" element={<Engagements />} />
-          <Route path="/clients" element={<ClientManagement />} />
+          <Route path="/engagements" element={<Engagements userAppId={userAppId} isManager={isManager} />} />
+          <Route path="/clients" element={<ClientManagement userAppId={userAppId} isManager={isManager} />} />
           <Route path="/analytics" element={<AnalyticsV2 />} />
           {isManager && (
             <>

@@ -8,7 +8,7 @@ import type { ClientInteraction, InteractionType, InteractionStatus, ClientInfo,
 
 // Types moved to shared file at app/types/client.ts to avoid circular imports
 
-export const ClientManagement = () => {
+export const ClientManagement = ({ userAppId, isManager }: { userAppId: string | null; isManager: boolean }) => {
   const [interactions, setInteractions] = useState<ClientInteraction[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clients, setClients] = useState<Record<string, ClientInfo>>({});
@@ -26,7 +26,10 @@ export const ClientManagement = () => {
     const stored = localStorage.getItem('esa-client-interactions');
     if (stored) {
       try {
-        setInteractions(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        // Filter by appId if not manager
+        const filtered = isManager ? parsed : parsed.filter((i: any) => i.appId === userAppId);
+        setInteractions(filtered);
       } catch (e) {
         console.error('Failed to parse client interactions:', e);
         setInteractions([]);
@@ -51,6 +54,7 @@ export const ClientManagement = () => {
       ...interaction,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
+      appId: userAppId || undefined,
     };
 
     const updated = [...interactions, newInteraction];

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 interface SplashScreenProps {
-  onAuthenticated: (isManager: boolean) => void;
+  onAuthenticated: (isManager: boolean, appId?: string | null) => void;
   userName?: string; // optional, passed by App.tsx
 }
 
@@ -76,7 +76,11 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
     }
     console.log("Calling onAuthenticated with isManager:", validation.isManager);
     setIsValidating(true);
-    setTimeout(() => onAuthenticated(validation.isManager), 800);
+    
+    // Pass APPID if regular user
+    const appId = !validation.isManager ? password.trim() : null;
+    
+    setTimeout(() => onAuthenticated(validation.isManager, appId), 800);
   };
 
   return (

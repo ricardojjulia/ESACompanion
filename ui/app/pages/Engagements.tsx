@@ -25,9 +25,10 @@ export interface Engagement {
   description: string;
   createdAt: string;
   tasks: Task[];
+  appId?: string;
 }
 
-export const Engagements = () => {
+export const Engagements = ({ userAppId, isManager }: { userAppId: string | null; isManager: boolean }) => {
   const [engagements, setEngagements] = useState<Engagement[]>([]);
   const [selectedEngagement, setSelectedEngagement] = useState<Engagement | null>(null);
   const [showCreateEngagement, setShowCreateEngagement] = useState(false);
@@ -41,12 +42,14 @@ export const Engagements = () => {
     const stored = localStorage.getItem('esa-engagements');
     if (stored) {
       const parsed = JSON.parse(stored);
-      setEngagements(parsed);
-      if (parsed.length > 0 && !selectedEngagement) {
-        setSelectedEngagement(parsed[0]);
+      // Filter by appId if not manager
+      const filtered = isManager ? parsed : parsed.filter((e: Engagement) => e.appId === userAppId);
+      setEngagements(filtered);
+      if (filtered.length > 0 && !selectedEngagement) {
+        setSelectedEngagement(filtered[0]);
       }
     }
-  }, []);
+  }, [userAppId, isManager]);
 
   // Save engagements to localStorage whenever they change
   useEffect(() => {
@@ -138,6 +141,7 @@ export const Engagements = () => {
       description,
       createdAt: new Date().toISOString(),
       tasks: [],
+      appId: userAppId || undefined,
     };
     setEngagements([...engagements, newEngagement]);
     setSelectedEngagement(newEngagement);

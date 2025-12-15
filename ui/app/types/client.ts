@@ -18,6 +18,7 @@ export interface ClientInteraction {
   actionItems: string | ActionItem[];
   status: InteractionStatus;
   createdAt: string;
+  appId?: string;
 }
 
 export interface ClientInfo {
