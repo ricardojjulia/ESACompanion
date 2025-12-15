@@ -28,8 +28,10 @@ export const Reports = () => {
   const [users, setUsers] = useState<ESAUser[]>([]);
   const [userMetrics, setUserMetrics] = useState<UserMetrics[]>([]);
   const [selectedUserAppId, setSelectedUserAppId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    console.log('📊 Team Reports - Component mounted, loading data...');
     loadUsersAndMetrics();
   }, []);
 
@@ -108,10 +110,22 @@ export const Reports = () => {
     setUserMetrics(metrics);
     if (metrics.length > 0) {
       setSelectedUserAppId(metrics[0].appId);
+      console.log('📊 Team Reports - Selected first user:', metrics[0].appId);
+    } else {
+      console.log('📊 Team Reports - No users found to display metrics for');
     }
+    setLoading(false);
   };
 
   const selectedMetrics = userMetrics.find((m) => m.appId === selectedUserAppId);
+  
+  console.log('📊 Team Reports - Render state:', {
+    usersCount: users.length,
+    metricsCount: userMetrics.length,
+    selectedUserAppId,
+    hasSelectedMetrics: !!selectedMetrics,
+    loading
+  });
 
   return (
     <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
@@ -124,7 +138,12 @@ export const Reports = () => {
         </Paragraph>
       </div>
 
-      {users.length === 0 ? (
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '64px 32px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
+          <Heading level={3}>Loading...</Heading>
+        </div>
+      ) : users.length === 0 ? (
         <div
           style={{
             textAlign: 'center',
