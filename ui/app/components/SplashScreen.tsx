@@ -23,6 +23,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
   const userEmail = getUserEmail();
 
   const validatePassword = (input: string): { isValid: boolean; isManager: boolean } => {
+    const trimmedInput = input.trim();
+    
     // Load configured users (APPIDs) from localStorage
     let users: any[] = [];
     try {
@@ -32,18 +34,18 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
       users = [];
     }
 
-    const appIds = users.map((u: any) => u.appId);
+    const appIds = users.map((u: any) => u.appId.trim());
     
-    // Check if input matches any configured APPID
-    const isValidAppId = appIds.includes(input);
+    // Check if input matches any configured APPID (case-sensitive exact match)
+    const isValidAppId = appIds.includes(trimmedInput);
     
-    const digits = input.match(/\d/g);
+    const digits = trimmedInput.match(/\d/g);
     const hasDigits = digits && digits.length > 0;
     const sum = hasDigits ? digits.reduce((acc, d) => acc + parseInt(d, 10), 0) : 0;
-    const hasUpperM = /[M]/.test(input);
+    const hasUpperM = /[M]/.test(trimmedInput);
     const sumValid = sum === 30;
     
-    console.log("Password validation:", { input, hasUpperM, sum, sumValid, isValidAppId, availableAppIds: appIds });
+    console.log("Password validation:", { input: trimmedInput, appIds, hasUpperM, sum, sumValid, isValidAppId });
     
     // Manager: needs uppercase M AND sum to 30
     if (hasUpperM && sumValid) {
