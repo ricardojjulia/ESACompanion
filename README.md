@@ -50,17 +50,21 @@ To learn React, check out the [React documentation](https://reactjs.org/).
 
 ## ESA Companion Enhancements
 
-- Clickable dashboard tiles reveal filtered task details.
-- Completion rate counts Finished + Delivered.
-- Analytics panel with insights and an "ESA Normal Tasks" helper.
-- Client Management tab: CRUD for interactions (Meeting, Call, Email, Follow-up, Review).
-- JSON import/export for Engagements and Client Interactions with basic validation and success banners.
-- Serious login screen (SplashScreen) with minimal, professional styling.
+- Architect Workspace dashboard: objectives, task progress, attention items, and linked client updates.
+- ESA Admin mode: full project, objective, task, client, and client-update management, including JSON import/export.
+- Client mode: assigned-project visibility, task-status updates, and submission of project-linked client updates.
+- Project assignment uses `assignedClientAppIds`; legacy projects without assignments are available only in ESA Admin mode.
+- Client updates use `engagementId` and `submittedByAppId` to associate updates with an assigned project and client.
+
+### Authorization Model
+
+The current Admin/Client controls are implemented in the browser using `sessionStorage` and `localStorage`. They prevent accidental cross-mode changes in the application UI, but are not server-enforced authorization and must not be considered a security boundary. Production use requires an AppEngine backend and a secured Dynatrace persistence service.
 
 ### Local Data Keys
 
-- `esa-engagements` — Engagement tasks with statuses.
-- `esa-client-interactions` — Client interactions grouped by client.
+- `esa-engagements` — Projects, objectives, tasks, and client assignments.
+- `esa-client-interactions` — Project-linked client updates and administrator updates.
+- `esa-clients` — Client registry records.
 
 ### Deploy tip
 

@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { Button } from '@dynatrace/strato-components/buttons';
+import { Surface } from '@dynatrace/strato-components/layouts';
 import { Heading } from '@dynatrace/strato-components/typography';
+import { EmptyState } from '@dynatrace/strato-components-preview/content';
+import { isClientInteractionVisibleToUser, isEngagementVisibleToUser } from '../utils/partitionedCollection';
+import { getVisibleClients, parseClientRegistry } from '../utils/clientRegistry';
 
 interface ClientMetrics {
   clientId: string;
@@ -17,7 +22,7 @@ interface ClientMetrics {
   interactionCadence: 'frequent' | 'moderate' | 'sparse';
 }
 
-export const AnalyticsV2 = () => {
+export const AnalyticsV2 = ({ userAppId, isManager }: { userAppId: string | null; isManager: boolean }) => {
   const [clientMetrics, setClientMetrics] = useState<ClientMetrics[]>([]);
   const [sortBy, setSortBy] = useState<'health' | 'momentum' | 'interactions'>('health');
 
@@ -25,21 +30,21 @@ export const AnalyticsV2 = () => {
     calculateClientHealthScores();
     const interval = setInterval(calculateClientHealthScores, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userAppId, isManager]);
 
   const calculateClientHealthScores = () => {
     try {
-      const engagements = JSON.parse(localStorage.getItem('esa-engagements') || '[]');
-      const interactions = JSON.parse(localStorage.getItem('esa-client-interactions') || '[]');
-      const clientsData = JSON.parse(localStorage.getItem('esa-clients') || '{}');
-      
-      // Convert clients object to array (handle both object and array formats)
-      let clientsArray: any[] = [];
-      if (Array.isArray(clientsData)) {
-        clientsArray = clientsData;
-      } else if (typeof clientsData === 'object' && clientsData !== null) {
-        clientsArray = Object.values(clientsData);
-      }
+      const storedEngagements: unknown = JSON.parse(localStorage.getItem('esa-engagements') || '[]');
+      const storedInteractions: unknown = JSON.parse(localStorage.getItem('esa-client-interactions') || '[]');
+      const engagements = Array.isArray(storedEngagements)
+        ? storedEngagements.filter((engagement: any) => isEngagementVisibleToUser(engagement, userAppId, isManager))
+        : [];
+      const interactions = Array.isArray(storedInteractions)
+        ? storedInteractions.filter((interaction: any) => isClientInteractionVisibleToUser(interaction, engagements, userAppId, isManager))
+        : [];
+      const clientsArray = isManager
+        ? getVisibleClients(parseClientRegistry(localStorage.getItem('esa-clients')), userAppId, isManager)
+        : Array.from(new Map(engagements.map((engagement: any) => [engagement.clientName, { id: engagement.clientName, name: engagement.clientName }])).values());
 
       const metrics: ClientMetrics[] = clientsArray.map((client: any) => {
         // Count engagements for this client
@@ -155,18 +160,17 @@ export const AnalyticsV2 = () => {
   };
 
   const getHealthColor = (score: number): string => {
-    if (score >= 80) return '#10b981'; // green
-    if (score >= 60) return '#f59e0b'; // amber
-    if (score >= 40) return '#ef5350'; // light red
-    return '#d32f2f'; // dark red
+    if (score >= 80) return 'var(--dt-colors-text-success)';
+    if (score >= 60) return 'var(--dt-colors-text-warning)';
+    return 'var(--dt-colors-text-critical)';
   };
 
-  const getMomentumEmoji = (momentum: string): string => {
-    return momentum === 'high' ? '📈' : momentum === 'medium' ? '→' : '📉';
+  const getMomentumLabel = (momentum: string): string => {
+    return momentum === 'high' ? 'Increasing' : momentum === 'medium' ? 'Steady' : 'Decreasing';
   };
 
-  const getCadenceEmoji = (cadence: string): string => {
-    return cadence === 'frequent' ? '⚡' : cadence === 'moderate' ? '🔔' : '⏱️';
+  const getCadenceLabel = (cadence: string): string => {
+    return cadence === 'frequent' ? 'Frequent' : cadence === 'moderate' ? 'Moderate' : 'Sparse';
   };
 
   const sortedMetrics = getSortedMetrics();
@@ -176,58 +180,20 @@ export const AnalyticsV2 = () => {
       <Heading level={1} style={{ marginBottom: '8px' }}>
         ESA Companion Analytics V2.0
       </Heading>
-      <div style={{ color: '#666', fontSize: '14px', marginBottom: '24px' }}>
-        Client Health Scorecard — Real-time vitality, momentum, and risk indicators
+      <div style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '14px', marginBottom: '24px' }}>
+        Client Health Scorecard: real-time vitality, momentum, and risk indicators
       </div>
 
       {/* Sort Controls */}
       <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-        <button
-          onClick={() => setSortBy('health')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: sortBy === 'health' ? '2px solid #2196f3' : '1px solid #ddd',
-            backgroundColor: sortBy === 'health' ? '#e3f2fd' : '#fff',
-            cursor: 'pointer',
-            fontWeight: sortBy === 'health' ? 'bold' : 'normal',
-          }}
-        >
-          💚 Health Score
-        </button>
-        <button
-          onClick={() => setSortBy('momentum')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: sortBy === 'momentum' ? '2px solid #2196f3' : '1px solid #ddd',
-            backgroundColor: sortBy === 'momentum' ? '#e3f2fd' : '#fff',
-            cursor: 'pointer',
-            fontWeight: sortBy === 'momentum' ? 'bold' : 'normal',
-          }}
-        >
-          📈 Momentum
-        </button>
-        <button
-          onClick={() => setSortBy('interactions')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: sortBy === 'interactions' ? '2px solid #2196f3' : '1px solid #ddd',
-            backgroundColor: sortBy === 'interactions' ? '#e3f2fd' : '#fff',
-            cursor: 'pointer',
-            fontWeight: sortBy === 'interactions' ? 'bold' : 'normal',
-          }}
-        >
-          📞 Interactions
-        </button>
+        <Button variant={sortBy === 'health' ? 'emphasized' : 'default'} onClick={() => setSortBy('health')}>Health Score</Button>
+        <Button variant={sortBy === 'momentum' ? 'emphasized' : 'default'} onClick={() => setSortBy('momentum')}>Momentum</Button>
+        <Button variant={sortBy === 'interactions' ? 'emphasized' : 'default'} onClick={() => setSortBy('interactions')}>Interactions</Button>
       </div>
 
       {/* Metrics Grid */}
       {clientMetrics.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-          No clients yet. Create a client in Client Management to get started.
-        </div>
+        <EmptyState><EmptyState.Title>No clients yet</EmptyState.Title><EmptyState.Details>Create a client in Client Management to get started.</EmptyState.Details></EmptyState>
       ) : (
         <div
           style={{
@@ -237,14 +203,12 @@ export const AnalyticsV2 = () => {
           }}
         >
           {sortedMetrics.map((metric) => (
-            <div
+            <Surface
               key={metric.clientId}
+              elevation="flat"
+              color={metric.redFlags.length > 0 ? 'warning' : 'neutral'}
               style={{
-                border: '1px solid #e0e0e0',
-                borderRadius: '12px',
                 padding: '16px',
-                backgroundColor: '#fff',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                 position: 'relative',
                 overflow: 'hidden',
               }}
@@ -258,17 +222,17 @@ export const AnalyticsV2 = () => {
                     left: 0,
                     right: 0,
                     height: '4px',
-                    backgroundColor: metric.healthScore >= 60 ? '#ff9800' : '#d32f2f',
+                    backgroundColor: metric.healthScore >= 60 ? 'var(--dt-colors-background-warning-default)' : 'var(--dt-colors-background-critical-default)',
                   }}
                 />
               )}
 
               {/* Client Name & ID */}
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#000' }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
                   {metric.clientName}
                 </div>
-                <div style={{ fontSize: '11px', color: '#999' }}>ID: {metric.clientId}</div>
+                <div style={{ fontSize: '11px', color: 'var(--dt-colors-text-secondary)' }}>ID: {metric.clientId}</div>
               </div>
 
               {/* Health Score Gauge */}
@@ -281,7 +245,7 @@ export const AnalyticsV2 = () => {
                     marginBottom: '6px',
                   }}
                 >
-                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>Health Score</span>
+                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--dt-colors-text-secondary)' }}>Health Score</span>
                   <span style={{ fontSize: '18px', fontWeight: 'bold', color: getHealthColor(metric.healthScore) }}>
                     {metric.healthScore}
                   </span>
@@ -290,7 +254,7 @@ export const AnalyticsV2 = () => {
                   style={{
                     width: '100%',
                     height: '8px',
-                    backgroundColor: '#e0e0e0',
+                    backgroundColor: 'var(--dt-colors-surface-container-subtle)',
                     borderRadius: '4px',
                     overflow: 'hidden',
                   }}
@@ -312,32 +276,30 @@ export const AnalyticsV2 = () => {
                   style={{
                     flex: 1,
                     padding: '8px 12px',
-                    backgroundColor: '#f5f5f5',
+                    backgroundColor: 'var(--dt-colors-surface-container-subtle)',
                     borderRadius: '6px',
                     fontSize: '12px',
                     textAlign: 'center',
                   }}
                 >
-                  <div style={{ fontSize: '18px', marginBottom: '2px' }}>{getMomentumEmoji(metric.engagementMomentum)}</div>
-                  <div style={{ color: '#666' }}>Momentum</div>
-                  <div style={{ fontWeight: 'bold', color: '#000', marginTop: '2px' }}>
-                    {metric.engagementMomentum.charAt(0).toUpperCase() + metric.engagementMomentum.slice(1)}
+                  <div style={{ color: 'var(--dt-colors-text-secondary)' }}>Momentum</div>
+                  <div style={{ fontWeight: 'bold', marginTop: '2px' }}>
+                    {getMomentumLabel(metric.engagementMomentum)}
                   </div>
                 </div>
                 <div
                   style={{
                     flex: 1,
                     padding: '8px 12px',
-                    backgroundColor: '#f5f5f5',
+                    backgroundColor: 'var(--dt-colors-surface-container-subtle)',
                     borderRadius: '6px',
                     fontSize: '12px',
                     textAlign: 'center',
                   }}
                 >
-                  <div style={{ fontSize: '18px', marginBottom: '2px' }}>{getCadenceEmoji(metric.interactionCadence)}</div>
-                  <div style={{ color: '#666' }}>Cadence</div>
-                  <div style={{ fontWeight: 'bold', color: '#000', marginTop: '2px' }}>
-                    {metric.interactionCadence.charAt(0).toUpperCase() + metric.interactionCadence.slice(1)}
+                  <div style={{ color: 'var(--dt-colors-text-secondary)' }}>Cadence</div>
+                  <div style={{ fontWeight: 'bold', marginTop: '2px' }}>
+                    {getCadenceLabel(metric.interactionCadence)}
                   </div>
                 </div>
               </div>
@@ -352,27 +314,27 @@ export const AnalyticsV2 = () => {
                   fontSize: '13px',
                 }}
               >
-                <div style={{ backgroundColor: '#f9f9f9', padding: '8px', borderRadius: '6px' }}>
-                  <div style={{ color: '#999' }}>Engagements</div>
-                  <div style={{ fontWeight: 'bold', color: '#000', fontSize: '16px' }}>
+                <div style={{ backgroundColor: 'var(--dt-colors-surface-container-subtle)', padding: '8px', borderRadius: '6px' }}>
+                  <div style={{ color: 'var(--dt-colors-text-secondary)' }}>Engagements</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
                     {metric.totalEngagements}
                   </div>
                 </div>
-                <div style={{ backgroundColor: '#f9f9f9', padding: '8px', borderRadius: '6px' }}>
-                  <div style={{ color: '#999' }}>Interactions</div>
-                  <div style={{ fontWeight: 'bold', color: '#000', fontSize: '16px' }}>
+                <div style={{ backgroundColor: 'var(--dt-colors-surface-container-subtle)', padding: '8px', borderRadius: '6px' }}>
+                  <div style={{ color: 'var(--dt-colors-text-secondary)' }}>Interactions</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
                     {metric.totalInteractions}
                   </div>
                 </div>
-                <div style={{ backgroundColor: '#f9f9f9', padding: '8px', borderRadius: '6px' }}>
-                  <div style={{ color: '#999' }}>Tasks Complete</div>
-                  <div style={{ fontWeight: 'bold', color: '#000', fontSize: '16px' }}>
+                <div style={{ backgroundColor: 'var(--dt-colors-surface-container-subtle)', padding: '8px', borderRadius: '6px' }}>
+                  <div style={{ color: 'var(--dt-colors-text-secondary)' }}>Tasks Complete</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
                     {metric.completedTasks}/{metric.totalTasks}
                   </div>
                 </div>
-                <div style={{ backgroundColor: '#f9f9f9', padding: '8px', borderRadius: '6px' }}>
-                  <div style={{ color: '#999' }}>Completion %</div>
-                  <div style={{ fontWeight: 'bold', color: '#000', fontSize: '16px' }}>
+                <div style={{ backgroundColor: 'var(--dt-colors-surface-container-subtle)', padding: '8px', borderRadius: '6px' }}>
+                  <div style={{ color: 'var(--dt-colors-text-secondary)' }}>Completion %</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
                     {metric.totalTasks > 0 ? Math.round((metric.completedTasks / metric.totalTasks) * 100) : 0}%
                   </div>
                 </div>
@@ -380,9 +342,9 @@ export const AnalyticsV2 = () => {
 
               {/* Red Flags */}
               {metric.redFlags.length > 0 && (
-                <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #e0e0e0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#d32f2f', marginBottom: '6px' }}>
-                    🚩 RED FLAGS
+                <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--dt-colors-border-container-default)' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--dt-colors-text-critical)', marginBottom: '6px' }}>
+                    Red flags
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {metric.redFlags.map((flag, idx) => (
@@ -390,14 +352,14 @@ export const AnalyticsV2 = () => {
                         key={idx}
                         style={{
                           fontSize: '12px',
-                          color: '#d32f2f',
+                          color: 'var(--dt-colors-text-critical)',
                           padding: '4px 8px',
-                          backgroundColor: '#ffebee',
+                          backgroundColor: 'var(--dt-colors-surface-critical-subtle)',
                           borderRadius: '4px',
-                          border: '1px solid #ffcdd2',
+                          border: '1px solid var(--dt-colors-border-critical-default)',
                         }}
                       >
-                        ⚠️ {flag}
+                        {flag}
                       </div>
                     ))}
                   </div>
@@ -406,11 +368,11 @@ export const AnalyticsV2 = () => {
 
               {/* Last Interaction Date */}
               {metric.lastInteractionDate && (
-                <div style={{ marginTop: '12px', fontSize: '11px', color: '#999', textAlign: 'center' }}>
+                <div style={{ marginTop: '12px', fontSize: '11px', color: 'var(--dt-colors-text-secondary)', textAlign: 'center' }}>
                   Last activity: {new Date(metric.lastInteractionDate).toLocaleDateString()}
                 </div>
               )}
-            </div>
+            </Surface>
           ))}
         </div>
       )}

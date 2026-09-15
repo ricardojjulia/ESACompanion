@@ -1,5 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Button } from "@dynatrace/strato-components/buttons";
+import { Text } from "@dynatrace/strato-components/typography";
 import { AppHeader } from "@dynatrace/strato-components-preview/layouts";
 
 interface HeaderProps {
@@ -13,51 +15,28 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, userName, isManager })
     <AppHeader>
       <AppHeader.NavItems>
         <AppHeader.AppNavLink as={Link} to="/" />
+        <AppHeader.NavItem as={Link} to="/engagements">
+          Engagements
+        </AppHeader.NavItem>
+        <AppHeader.NavItem as={Link} to="/clients">
+          Client Updates
+        </AppHeader.NavItem>
+        <AppHeader.NavItem as={Link} to="/analytics">
+          Analytics
+        </AppHeader.NavItem>
         {isManager && (
           <AppHeader.NavItem as={Link} to="/resources">
             ESA Resources
           </AppHeader.NavItem>
         )}
-        {isManager && (
-          <AppHeader.NavItem as={Link} to="/reports">
-            Team Reports
-          </AppHeader.NavItem>
-        )}
-        {!isManager && (
-          <AppHeader.NavItem as={Link} to="/engagements">
-            Engagement Management
-          </AppHeader.NavItem>
-        )}
-        {!isManager && (
-          <AppHeader.NavItem as={Link} to="/clients">
-            Client Management
-          </AppHeader.NavItem>
-        )}
-        {!isManager && (
-          <AppHeader.NavItem as={Link} to="/analytics">
-            Analytics V2.0
-          </AppHeader.NavItem>
-        )}
       </AppHeader.NavItems>
       <AppHeader.ActionItems>
         {userName && (
-          <span style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '12px' }}>
-            {userName}
-          </span>
+          <Text>{userName}</Text>
         )}
-        <button
-          onClick={onLogout}
-          style={{
-            padding: '6px 10px',
-            borderRadius: '6px',
-            border: '1px solid var(--dt-colors-border-container-default)',
-            backgroundColor: 'var(--dt-colors-surface-default)',
-            cursor: 'pointer',
-            fontSize: '12px'
-          }}
-        >
+        <Button variant="default" onClick={onLogout}>
           Logout
-        </button>
+        </Button>
       </AppHeader.ActionItems>
     </AppHeader>
   );

@@ -1,12 +1,28 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@dynatrace/strato-components/buttons';
 import { Heading } from '@dynatrace/strato-components/typography';
-import { Button } from '@dynatrace/strato-components';
+import { EmptyState, MessageContainer } from '@dynatrace/strato-components-preview/content';
 import { CreateEngagementModal } from '../components/Engagements/CreateEngagementModal';
 import { CreateTaskModal } from '../components/Engagements/CreateTaskModal';
 import { EngagementCard } from '../components/Engagements/EngagementCard';
+import { ObjectiveModal } from '../components/Engagements/ObjectiveModal';
 import { TasksByStatus } from '../components/Engagements/TasksByStatus';
+import {
+  canUpdateEngagementTaskStatus,
+  isEngagementMutableByUser,
+  isEngagementVisibleToUser,
+  mergeVisibleEngagements,
+} from '../utils/partitionedCollection';
+import { getClientRegistryKey, parseClientRegistry } from '../utils/clientRegistry';
 
 export type TaskStatus = 'Not Started' | 'In Progress' | 'Stalled' | 'Finished' | 'Delivered';
+
+export interface Objective {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+}
 
 export interface Task {
   id: string;
@@ -16,6 +32,7 @@ export interface Task {
   dueDate: string;
   status: TaskStatus;
   createdAt: string;
+  objectiveId?: string;
 }
 
 export interface Engagement {
@@ -25,40 +42,63 @@ export interface Engagement {
   description: string;
   createdAt: string;
   tasks: Task[];
+  objectives?: Objective[];
   appId?: string;
+  assignedClientAppIds?: string[];
 }
 
+const getConfiguredAppIds = () => {
+  try {
+    const users: unknown = JSON.parse(localStorage.getItem('esa-users') || '[]');
+    return Array.isArray(users)
+      ? users.flatMap((user) => typeof user === 'object' && user !== null && 'appId' in user && typeof user.appId === 'string' ? [user.appId] : [])
+      : [];
+  } catch {
+    return [];
+  }
+};
+
 export const Engagements = ({ userAppId, isManager }: { userAppId: string | null; isManager: boolean }) => {
-  const [engagements, setEngagements] = useState<Engagement[]>([]);
+  const [allEngagements, setAllEngagements] = useState<Engagement[]>([]);
   const [selectedEngagement, setSelectedEngagement] = useState<Engagement | null>(null);
   const [showCreateEngagement, setShowCreateEngagement] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingEngagement, setEditingEngagement] = useState<Engagement | null>(null);
+  const [editingObjective, setEditingObjective] = useState<Objective | null | undefined>(undefined);
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
 
-  // Load engagements from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('esa-engagements');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Filter by appId if not manager
-      const filtered = isManager ? parsed : parsed.filter((e: Engagement) => e.appId === userAppId);
-      setEngagements(filtered);
-      if (filtered.length > 0 && !selectedEngagement) {
-        setSelectedEngagement(filtered[0]);
-      }
+    try {
+      const parsed = stored ? JSON.parse(stored) : [];
+      const fullCollection = Array.isArray(parsed) ? parsed : [];
+      setAllEngagements(fullCollection);
+      const visible = fullCollection.filter((engagement: Engagement) => isEngagementVisibleToUser(engagement, userAppId, isManager));
+      setSelectedEngagement(visible[0] ?? null);
+    } catch (error) {
+      console.error('Failed to parse engagements:', error);
+      setAllEngagements([]);
+      setSelectedEngagement(null);
     }
   }, [userAppId, isManager]);
 
-  // Save engagements to localStorage whenever they change
-  useEffect(() => {
-    if (engagements.length > 0) {
-      localStorage.setItem('esa-engagements', JSON.stringify(engagements));
-    }
-  }, [engagements]);
+  const engagements = allEngagements.filter((engagement) => isEngagementVisibleToUser(engagement, userAppId, isManager));
+
+  const persistEngagements = (nextVisibleEngagements: Engagement[]) => {
+    const merged = mergeVisibleEngagements(allEngagements, nextVisibleEngagements, userAppId, isManager);
+    setAllEngagements(merged);
+    localStorage.setItem('esa-engagements', JSON.stringify(merged));
+    return merged;
+  };
 
   const handleExportEngagements = () => {
+    if (!isManager) {
+      setImportMessage('Only administrators can export engagements.');
+      return;
+    }
     const data = JSON.stringify(engagements, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -72,6 +112,11 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
   };
 
   const handleImportEngagements = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isManager) {
+      setImportMessage('Only administrators can import engagements.');
+      e.target.value = '';
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -79,53 +124,65 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
       try {
         const raw = JSON.parse(String(reader.result));
         if (!Array.isArray(raw)) throw new Error('Invalid JSON: expected an array');
-        const normalized = raw.map((eng: any) => ({
-          id: String(eng.id ?? `eng-${Date.now()}`),
-          name: String(eng.name ?? eng.title ?? 'Untitled Engagement'),
-          clientName: String(eng.clientName ?? eng.client ?? 'Unknown Client'),
-          description: String(eng.description ?? eng.notes ?? ''),
-          createdAt: String(eng.createdAt ?? new Date().toISOString()),
-          appId: userAppId || undefined, // Tag imported data with current user's appId
-          tasks: Array.isArray(eng.tasks) ? eng.tasks.map((t: any) => ({
-            id: String(t.id ?? `task-${Date.now()}`),
-            engagementId: String(eng.id ?? `eng-${Date.now()}`),
-            title: String(t.title ?? 'Task'),
-            description: String(t.description ?? t.notes ?? ''),
-            dueDate: String(t.dueDate ?? ''),
-            status: (t.status ?? 'Not Started') as TaskStatus,
-            createdAt: String(t.createdAt ?? new Date().toISOString()),
-          })) : [],
-        }));
+        const normalized: Engagement[] = raw.map((eng: any, engagementIndex: number) => {
+          const id = String(eng.id ?? `eng-${Date.now()}-${engagementIndex}`);
+          return {
+            id,
+            name: String(eng.name ?? eng.title ?? 'Untitled Engagement'),
+            clientName: String(eng.clientName ?? eng.client ?? 'Unknown Client'),
+            description: String(eng.description ?? eng.notes ?? ''),
+            createdAt: String(eng.createdAt ?? new Date().toISOString()),
+            assignedClientAppIds: Array.isArray(eng.assignedClientAppIds)
+              ? eng.assignedClientAppIds.filter((appId: unknown): appId is string => typeof appId === 'string')
+              : undefined,
+            objectives: Array.isArray(eng.objectives) ? eng.objectives.map((objective: any, index: number) => ({
+              id: String(objective.id ?? `obj-${Date.now()}-${index}`),
+              title: String(objective.title ?? 'Untitled Objective'),
+              description: String(objective.description ?? ''),
+              createdAt: String(objective.createdAt ?? new Date().toISOString()),
+            })) : undefined,
+            tasks: Array.isArray(eng.tasks) ? eng.tasks.map((task: any, taskIndex: number) => ({
+              id: String(task.id ?? `task-${Date.now()}-${taskIndex}`),
+              engagementId: id,
+              title: String(task.title ?? 'Task'),
+              description: String(task.description ?? task.notes ?? ''),
+              dueDate: String(task.dueDate ?? ''),
+              status: (task.status ?? 'Not Started') as TaskStatus,
+              createdAt: String(task.createdAt ?? new Date().toISOString()),
+              objectiveId: typeof task.objectiveId === 'string' ? task.objectiveId : undefined,
+            })) : [],
+          };
+        });
         // Require clientName for all engagements
         const invalid = normalized.find((e) => !e.clientName || e.clientName.trim().length === 0);
         if (invalid) throw new Error('Invalid engagement schema: each engagement must include a clientName');
         
         // Merge with existing engagements from localStorage instead of replacing
-        const existingEngagements = JSON.parse(localStorage.getItem('esa-engagements') || '[]');
-        const existingIds = new Set(existingEngagements.map((e: any) => e.id));
+        const existingIds = new Set(
+          engagements.map((engagement) => engagement.id),
+        );
         
         // Only add engagements that don't already exist (by ID)
         const newEngagements = normalized.filter(e => !existingIds.has(e.id));
-        const mergedEngagements = [...existingEngagements, ...newEngagements];
-        
-        setEngagements(mergedEngagements);
-        localStorage.setItem('esa-engagements', JSON.stringify(mergedEngagements));
-        setSelectedEngagement(normalized[0] || null);
+        const mergedEngagements = persistEngagements([...engagements, ...newEngagements]);
+        setSelectedEngagement(newEngagements[0] ?? mergedEngagements.find((engagement) => isEngagementVisibleToUser(engagement, userAppId, isManager)) ?? null);
         setImportMessage(`Imported ${newEngagements.length} new engagement(s) successfully. (${normalized.length - newEngagements.length} duplicates skipped)`);
 
         // Ensure clients exist for imported engagements
-        const storedClients = localStorage.getItem('esa-clients');
-        const clients: Record<string, any> = storedClients ? JSON.parse(storedClients) : {};
+        const clients = parseClientRegistry(localStorage.getItem('esa-clients'));
         let changed = false;
-        normalized.forEach((eng) => {
-          if (!clients[eng.clientName]) {
-            clients[eng.clientName] = {
+        newEngagements.forEach((eng) => {
+          const clientAppId = isManager ? undefined : userAppId || undefined;
+          const clientKey = getClientRegistryKey(eng.clientName, clientAppId);
+          if (!clients[clientKey]) {
+            clients[clientKey] = {
               id: 'cli-' + Date.now().toString() + Math.random().toString(36).slice(2),
               name: eng.clientName,
               primaryContact: '',
               notes: '',
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
+              appId: clientAppId,
             };
             changed = true;
           }
@@ -143,7 +200,15 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
     reader.readAsText(file);
   };
 
-  const handleCreateEngagement = (name: string, description: string, clientName: string) => {
+  const handleSaveEngagement = (name: string, description: string, clientName: string, assignedClientAppIds: string[]) => {
+    if (!isManager) return;
+    if (editingEngagement) {
+      const updatedEngagement = { ...editingEngagement, name, description, clientName, assignedClientAppIds };
+      persistEngagements(engagements.map((engagement) => engagement.id === updatedEngagement.id ? updatedEngagement : engagement));
+      setSelectedEngagement(updatedEngagement);
+      setEditingEngagement(null);
+      return;
+    }
     const newEngagement: Engagement = {
       id: `eng-${Date.now()}`,
       name,
@@ -151,28 +216,30 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
       description,
       createdAt: new Date().toISOString(),
       tasks: [],
-      appId: userAppId || undefined,
+      assignedClientAppIds,
     };
-    setEngagements([...engagements, newEngagement]);
+    persistEngagements([...engagements, newEngagement]);
     setSelectedEngagement(newEngagement);
     setShowCreateEngagement(false);
 
     // Ensure client exists in registry
-    const storedClients = localStorage.getItem('esa-clients');
-    const clients: Record<string, any> = storedClients ? JSON.parse(storedClients) : {};
-    if (!clients[clientName]) {
-      clients[clientName] = {
+    const clients = parseClientRegistry(localStorage.getItem('esa-clients'));
+    const clientAppId = undefined;
+    const clientKey = getClientRegistryKey(clientName, clientAppId);
+    if (!clients[clientKey]) {
+      clients[clientKey] = {
         id: 'cli-' + Date.now().toString() + Math.random().toString(36).slice(2),
         name: clientName,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        appId: clientAppId,
       };
       localStorage.setItem('esa-clients', JSON.stringify(clients));
     }
   };
 
-  const handleCreateTask = (title: string, description: string, dueDate: string) => {
-    if (!selectedEngagement) return;
+  const handleCreateTask = (title: string, description: string, dueDate: string, objectiveId?: string) => {
+    if (!selectedEngagement || !isEngagementMutableByUser(selectedEngagement, userAppId, isManager)) return;
 
     const newTask: Task = {
       id: `task-${Date.now()}`,
@@ -182,6 +249,7 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
       dueDate,
       status: 'Not Started',
       createdAt: new Date().toISOString(),
+      objectiveId,
     };
 
     const updatedEngagements = engagements.map((eng) =>
@@ -190,7 +258,7 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
         : eng
     );
 
-    setEngagements(updatedEngagements);
+    persistEngagements(updatedEngagements);
     setSelectedEngagement({
       ...selectedEngagement,
       tasks: [...selectedEngagement.tasks, newTask],
@@ -199,7 +267,7 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
   };
 
   const handleUpdateTaskStatus = (taskId: string, newStatus: TaskStatus) => {
-    if (!selectedEngagement) return;
+    if (!selectedEngagement || !canUpdateEngagementTaskStatus(selectedEngagement, userAppId, isManager)) return;
 
     const updatedEngagements = engagements.map((eng) =>
       eng.id === selectedEngagement.id
@@ -212,15 +280,36 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
         : eng
     );
 
-    setEngagements(updatedEngagements);
+    persistEngagements(updatedEngagements);
     const updated = updatedEngagements.find((e) => e.id === selectedEngagement.id);
     if (updated) {
       setSelectedEngagement(updated);
     }
   };
 
+  const handleSaveTask = (title: string, description: string, dueDate: string, objectiveId?: string) => {
+    if (!isManager || !selectedEngagement || !editingTask) {
+      setImportMessage('Only administrators can edit task details.');
+      return;
+    }
+    const updatedEngagements = engagements.map((engagement) =>
+      engagement.id === selectedEngagement.id
+        ? {
+            ...engagement,
+            tasks: engagement.tasks.map((task) =>
+              task.id === editingTask.id ? { ...task, title, description, dueDate, objectiveId } : task,
+            ),
+          }
+        : engagement,
+    );
+    persistEngagements(updatedEngagements);
+    const updated = updatedEngagements.find((engagement) => engagement.id === selectedEngagement.id);
+    if (updated) setSelectedEngagement(updated);
+    setEditingTask(null);
+  };
+
   const handleDeleteTask = (taskId: string) => {
-    if (!selectedEngagement) return;
+    if (!selectedEngagement || !isEngagementMutableByUser(selectedEngagement, userAppId, isManager)) return;
 
     const updatedEngagements = engagements.map((eng) =>
       eng.id === selectedEngagement.id
@@ -228,7 +317,7 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
         : eng
     );
 
-    setEngagements(updatedEngagements);
+    persistEngagements(updatedEngagements);
     const updated = updatedEngagements.find((e) => e.id === selectedEngagement.id);
     if (updated) {
       setSelectedEngagement(updated);
@@ -236,14 +325,39 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
   };
 
   const handleDeleteEngagement = (engagementId: string) => {
+    const engagement = engagements.find((item) => item.id === engagementId);
+    if (!engagement || !isEngagementMutableByUser(engagement, userAppId, isManager)) return;
     const updated = engagements.filter((e) => e.id !== engagementId);
-    setEngagements(updated);
+    persistEngagements(updated);
     if (selectedEngagement?.id === engagementId) {
       setSelectedEngagement(updated.length > 0 ? updated[0] : null);
     }
-    if (updated.length === 0) {
-      localStorage.removeItem('esa-engagements');
-    }
+  };
+
+  const handleSaveObjective = (title: string, description: string) => {
+    if (!selectedEngagement || !isEngagementMutableByUser(selectedEngagement, userAppId, isManager)) return;
+    const objective = editingObjective ?? {
+      id: `obj-${Date.now()}`,
+      title,
+      description,
+      createdAt: new Date().toISOString(),
+    };
+    const objectives = editingObjective
+      ? (selectedEngagement.objectives ?? []).map((item) => item.id === objective.id ? { ...item, title, description } : item)
+      : [...(selectedEngagement.objectives ?? []), objective];
+    const updated = engagements.map((engagement) => engagement.id === selectedEngagement.id ? { ...engagement, objectives } : engagement);
+    persistEngagements(updated);
+    setSelectedEngagement({ ...selectedEngagement, objectives });
+    setEditingObjective(undefined);
+  };
+
+  const handleDeleteObjective = (objectiveId: string) => {
+    if (!selectedEngagement || !isEngagementMutableByUser(selectedEngagement, userAppId, isManager)) return;
+    const objectives = (selectedEngagement.objectives ?? []).filter((objective) => objective.id !== objectiveId);
+    const tasks = selectedEngagement.tasks.map((task) => task.objectiveId === objectiveId ? { ...task, objectiveId: undefined } : task);
+    const updated = engagements.map((engagement) => engagement.id === selectedEngagement.id ? { ...engagement, objectives, tasks } : engagement);
+    persistEngagements(updated);
+    setSelectedEngagement({ ...selectedEngagement, objectives, tasks });
   };
 
   return (
@@ -265,18 +379,7 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
             Manage your ESA engagements and track tasks
           </p>
           {importMessage && (
-            <div
-              style={{
-                marginTop: '8px',
-                padding: '8px 12px',
-                backgroundColor: 'var(--dt-colors-surface-selected)',
-                border: '1px solid var(--dt-colors-border-container-default)',
-                borderRadius: '6px',
-                fontSize: '13px',
-              }}
-            >
-              {importMessage}
-            </div>
+            <MessageContainer style={{ marginTop: '8px' }}>{importMessage}</MessageContainer>
           )}
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -287,50 +390,14 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
             style={{ display: 'none' }}
             onChange={handleImportEngagements}
           />
-          <button
-            onClick={handleExportEngagements}
-            style={{
-              padding: '8px 12px',
-              backgroundColor: 'var(--dt-colors-surface-container-default)',
-              border: '1px solid var(--dt-colors-border-container-default)',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
-            title="Download engagements JSON"
-          >
-            ⬇️ Export JSON
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              padding: '8px 12px',
-              backgroundColor: 'var(--dt-colors-surface-container-default)',
-              border: '1px solid var(--dt-colors-border-container-default)',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
-            title="Upload engagements JSON"
-          >
-            ⬆️ Import JSON
-          </button>
-          <button
-            onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: 'var(--dt-colors-surface-container-default)',
-              border: '1px solid var(--dt-colors-border-container-default)',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
-          >
-            {viewMode === 'list' ? '📊 Kanban View' : '📋 List View'}
-          </button>
-          <Button variant="accent" onClick={() => setShowCreateEngagement(true)}>
-            + New Engagement
+          {isManager && <Button onClick={handleExportEngagements}>Export JSON</Button>}
+          {isManager && <Button onClick={() => fileInputRef.current?.click()}>Import JSON</Button>}
+          <Button onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')}>
+            {viewMode === 'list' ? 'Kanban View' : 'List View'}
           </Button>
+          {isManager && <Button variant="emphasized" onClick={() => setShowCreateEngagement(true)}>
+            New Engagement
+          </Button>}
         </div>
       </div>
 
@@ -357,18 +424,7 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
               Engagements ({engagements.length})
             </div>
             {engagements.length === 0 ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: '24px',
-                  color: 'var(--dt-colors-text-secondary)',
-                  fontSize: '14px',
-                }}
-              >
-                No engagements yet.
-                <br />
-                Create your first one!
-              </div>
+              <EmptyState size="small"><EmptyState.Title>No engagements yet</EmptyState.Title><EmptyState.Details>Create your first one.</EmptyState.Details></EmptyState>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {engagements.map((engagement) => (
@@ -378,6 +434,7 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
                     isSelected={selectedEngagement?.id === engagement.id}
                     onSelect={() => setSelectedEngagement(engagement)}
                     onDelete={() => handleDeleteEngagement(engagement.id)}
+                    canDelete={isEngagementMutableByUser(engagement, userAppId, isManager)}
                   />
                 ))}
               </div>
@@ -386,7 +443,7 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
         </div>
 
         {/* Tasks Area */}
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           {selectedEngagement ? (
             <>
               {/* Engagement Info */}
@@ -417,38 +474,53 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
                       Client: <strong>{selectedEngagement.clientName}</strong> • Created: {new Date(selectedEngagement.createdAt).toLocaleDateString()} • {selectedEngagement.tasks.length} tasks
                     </div>
                   </div>
-                  <Button variant="accent" onClick={() => setShowCreateTask(true)}>
+                  {isManager && <Button onClick={() => setEditingEngagement(selectedEngagement)}>Edit Engagement</Button>}
+                  <Button variant="accent" disabled={!isManager} onClick={() => setShowCreateTask(true)}>
                     + Add Task
                   </Button>
                 </div>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <Heading level={3}>Objectives</Heading>
+                  <Button disabled={!isManager} onClick={() => setEditingObjective(null)}>New Objective</Button>
+                </div>
+                {(selectedEngagement.objectives ?? []).length === 0 ? (
+                  <p style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '14px' }}>No objectives defined. Unassigned tasks remain visible below.</p>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                    {(selectedEngagement.objectives ?? []).map((objective) => {
+                      const assignedTasks = selectedEngagement.tasks.filter((task) => task.objectiveId === objective.id);
+                      const completedTasks = assignedTasks.filter((task) => task.status === 'Delivered').length;
+                      const progress = assignedTasks.length ? Math.round((completedTasks / assignedTasks.length) * 100) : 0;
+                      return <div key={objective.id} style={{ border: '1px solid var(--dt-colors-border-container-default)', borderRadius: '8px', padding: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}><strong>{objective.title}</strong><div><Button size="condensed" disabled={!isManager} onClick={() => setEditingObjective(objective)}>Edit</Button><Button size="condensed" color="critical" disabled={!isManager} onClick={() => handleDeleteObjective(objective.id)}>Delete</Button></div></div>
+                        {objective.description && <p style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '12px' }}>{objective.description}</p>}
+                        <div style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '12px' }}>{completedTasks}/{assignedTasks.length} delivered ({progress}%)</div>
+                      </div>;
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Tasks Visualization */}
               <TasksByStatus
                 tasks={selectedEngagement.tasks}
                 viewMode={viewMode}
+                objectives={selectedEngagement.objectives ?? []}
                 onUpdateStatus={handleUpdateTaskStatus}
                 onDeleteTask={handleDeleteTask}
+                onEditTask={setEditingTask}
+                canManage={isEngagementMutableByUser(selectedEngagement, userAppId, isManager)}
+                canUpdateStatus={canUpdateEngagementTaskStatus(selectedEngagement, userAppId, isManager)}
               />
             </>
           ) : (
-            <div
-              style={{
-                backgroundColor: 'var(--dt-colors-surface-container-default)',
-                border: '1px solid var(--dt-colors-border-container-default)',
-                borderRadius: '8px',
-                padding: '64px',
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
-              <Heading level={3} style={{ marginBottom: '8px' }}>
-                No Engagement Selected
-              </Heading>
-              <p style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '14px' }}>
-                Select an engagement from the sidebar or create a new one to get started
-              </p>
-            </div>
+            <EmptyState>
+              <EmptyState.Title>No engagement selected</EmptyState.Title>
+              <EmptyState.Details>Select an engagement from the sidebar or create a new one to get started.</EmptyState.Details>
+            </EmptyState>
           )}
         </div>
       </div>
@@ -457,7 +529,17 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
       {showCreateEngagement && (
         <CreateEngagementModal
           onClose={() => setShowCreateEngagement(false)}
-          onCreate={handleCreateEngagement}
+          onCreate={handleSaveEngagement}
+          configuredAppIds={getConfiguredAppIds()}
+        />
+      )}
+
+      {editingEngagement && (
+        <CreateEngagementModal
+          engagement={editingEngagement}
+          onClose={() => setEditingEngagement(null)}
+          onCreate={handleSaveEngagement}
+          configuredAppIds={getConfiguredAppIds()}
         />
       )}
 
@@ -465,8 +547,20 @@ export const Engagements = ({ userAppId, isManager }: { userAppId: string | null
         <CreateTaskModal
           onClose={() => setShowCreateTask(false)}
           onCreate={handleCreateTask}
+          objectives={selectedEngagement.objectives ?? []}
         />
       )}
+
+      {editingTask && selectedEngagement && (
+        <CreateTaskModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onCreate={handleSaveTask}
+          objectives={selectedEngagement.objectives ?? []}
+        />
+      )}
+
+      {editingObjective !== undefined && <ObjectiveModal objective={editingObjective ?? undefined} onClose={() => setEditingObjective(undefined)} onSave={handleSaveObjective} />}
     </div>
   );
 };

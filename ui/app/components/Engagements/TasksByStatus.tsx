@@ -1,49 +1,53 @@
 import React from 'react';
-import { Task, TaskStatus } from '../../pages/Engagements';
+import { Button } from '@dynatrace/strato-components/buttons';
+import { Surface } from '@dynatrace/strato-components/layouts';
+import { Select } from '@dynatrace/strato-components-preview/forms';
+import { Tooltip } from '@dynatrace/strato-components-preview/overlays';
+import { CalendarIcon, DeleteIcon, EditIcon } from '@dynatrace/strato-icons';
+import { Objective, Task, TaskStatus } from '../../pages/Engagements';
 
 interface TasksByStatusProps {
   tasks: Task[];
   viewMode: 'list' | 'kanban';
+  objectives: Objective[];
   onUpdateStatus: (taskId: string, newStatus: TaskStatus) => void;
   onDeleteTask: (taskId: string) => void;
+  onEditTask: (task: Task) => void;
+  canManage: boolean;
+  canUpdateStatus: boolean;
 }
 
 const statusOrder: TaskStatus[] = ['Not Started', 'In Progress', 'Stalled', 'Finished', 'Delivered'];
 
 const statusColors: Record<TaskStatus, string> = {
-  'Not Started': '#757575',
-  'In Progress': '#2196f3',
-  'Stalled': '#ff9800',
-  'Finished': '#4caf50',
-  'Delivered': '#9c27b0',
+  'Not Started': 'var(--dt-colors-icon-secondary)',
+  'In Progress': 'var(--dt-colors-icon-primary)',
+  'Stalled': 'var(--dt-colors-icon-warning)',
+  'Finished': 'var(--dt-colors-icon-success)',
+  'Delivered': 'var(--dt-colors-icon-primary)',
 };
 
 interface TaskCardProps {
   task: Task;
+  objective?: Objective;
   showStatus?: boolean;
   onUpdateStatus: (newStatus: TaskStatus) => void;
   onDelete: () => void;
+  onEdit: () => void;
+  canManage: boolean;
+  canUpdateStatus: boolean;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, showStatus = true, onUpdateStatus, onDelete }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, objective, showStatus = true, onUpdateStatus, onDelete, onEdit, canManage, canUpdateStatus }) => {
   const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'Delivered';
 
   return (
-    <div
+    <Surface
+      elevation="flat"
       style={{
         padding: '12px',
-        backgroundColor: 'var(--dt-colors-surface-container-subtle)',
-        border: `1px solid var(--dt-colors-border-container-default)`,
         borderLeft: `4px solid ${statusColors[task.status]}`,
-        borderRadius: '6px',
         marginBottom: '8px',
-        transition: 'all 0.2s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = 'var(--dt-colors-surface-container-default)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = 'var(--dt-colors-surface-container-subtle)';
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
@@ -71,66 +75,46 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, showStatus = true, onUpdateSt
               {task.description}
             </div>
           )}
+          {objective && <div style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '12px' }}>Objective: {objective.title}</div>}
         </div>
-        <button
-          onClick={onDelete}
-          style={{
-            marginLeft: '8px',
-            padding: '4px 8px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '14px',
-            opacity: 0.6,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = '1';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = '0.6';
-          }}
-        >
-          🗑️
-        </button>
+        {canManage && (
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <Tooltip text="Edit task">
+              <Button aria-label="Edit task" size="condensed" onClick={onEdit}><EditIcon /></Button>
+            </Tooltip>
+            <Tooltip text="Delete task">
+              <Button aria-label="Delete task" size="condensed" color="critical" onClick={onDelete}><DeleteIcon /></Button>
+            </Tooltip>
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px' }}>
-        <div style={{ color: isOverdue ? '#f44336' : 'var(--dt-colors-text-secondary)' }}>
-          📅 {new Date(task.dueDate).toLocaleDateString()}
+        <div style={{ color: isOverdue ? 'var(--dt-colors-text-critical)' : 'var(--dt-colors-text-secondary)' }}>
+          <CalendarIcon /> {new Date(task.dueDate).toLocaleDateString()}
           {isOverdue && ' (Overdue)'}
         </div>
         {showStatus && (
-          <select
-            value={task.status}
-            onChange={(e) => onUpdateStatus(e.target.value as TaskStatus)}
-            style={{
-              padding: '4px 8px',
-              fontSize: '12px',
-              backgroundColor: 'var(--dt-colors-surface-default)',
-              border: `1px solid ${statusColors[task.status]}`,
-              borderRadius: '4px',
-              color: statusColors[task.status],
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
-          >
-            {statusOrder.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
+          <Select aria-label="Task status" value={task.status} disabled={!canUpdateStatus} onChange={(value) => onUpdateStatus(value as TaskStatus)}>
+            <Select.Content>
+              {statusOrder.map((status) => <Select.Option key={status} value={status}>{status}</Select.Option>)}
+            </Select.Content>
+          </Select>
         )}
       </div>
-    </div>
+    </Surface>
   );
 };
 
 export const TasksByStatus: React.FC<TasksByStatusProps> = ({
   tasks,
   viewMode,
+  objectives,
   onUpdateStatus,
   onDeleteTask,
+  onEditTask,
+  canManage,
+  canUpdateStatus,
 }) => {
   if (viewMode === 'list') {
     const tasksByStatus = statusOrder.map((status) => ({
@@ -180,9 +164,13 @@ export const TasksByStatus: React.FC<TasksByStatusProps> = ({
                 <TaskCard
                   key={task.id}
                   task={task}
+                  objective={objectives.find((objective) => objective.id === task.objectiveId)}
                   showStatus={true}
                   onUpdateStatus={(newStatus) => onUpdateStatus(task.id, newStatus)}
                   onDelete={() => onDeleteTask(task.id)}
+                  onEdit={() => onEditTask(task)}
+                  canManage={canManage}
+                  canUpdateStatus={canUpdateStatus}
                 />
               ))
             )}
@@ -205,19 +193,19 @@ export const TasksByStatus: React.FC<TasksByStatusProps> = ({
         gridTemplateColumns: 'repeat(5, 1fr)',
         gap: '16px',
         height: 'calc(100vh - 300px)',
-        overflow: 'hidden',
+        overflowX: 'auto',
+        overflowY: 'hidden',
       }}
     >
       {tasksByStatus.map(({ status, tasks: statusTasks }) => (
-        <div
+        <Surface
           key={status}
+          elevation="flat"
           style={{
+            minWidth: '240px',
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: 'var(--dt-colors-surface-default)',
-            borderRadius: '8px',
             padding: '12px',
-            border: `1px solid var(--dt-colors-border-container-default)`,
           }}
         >
           <div
@@ -230,7 +218,7 @@ export const TasksByStatus: React.FC<TasksByStatusProps> = ({
               gap: '8px',
               position: 'sticky',
               top: 0,
-              backgroundColor: 'var(--dt-colors-surface-default)',
+              backgroundColor: 'var(--dt-colors-surface-container-default)',
               paddingBottom: '8px',
               borderBottom: `2px solid ${statusColors[status]}`,
             }}
@@ -247,7 +235,7 @@ export const TasksByStatus: React.FC<TasksByStatusProps> = ({
             <div
               style={{
                 backgroundColor: statusColors[status],
-                color: 'white',
+                color: 'var(--dt-colors-text-inverted)',
                 padding: '2px 8px',
                 borderRadius: '12px',
                 fontSize: '12px',
@@ -274,14 +262,18 @@ export const TasksByStatus: React.FC<TasksByStatusProps> = ({
                 <TaskCard
                   key={task.id}
                   task={task}
-                  showStatus={false}
+                  objective={objectives.find((objective) => objective.id === task.objectiveId)}
+                  showStatus={true}
                   onUpdateStatus={(newStatus) => onUpdateStatus(task.id, newStatus)}
                   onDelete={() => onDeleteTask(task.id)}
+                  onEdit={() => onEditTask(task)}
+                  canManage={canManage}
+                  canUpdateStatus={canUpdateStatus}
                 />
               ))
             )}
           </div>
-        </div>
+        </Surface>
       ))}
     </div>
   );

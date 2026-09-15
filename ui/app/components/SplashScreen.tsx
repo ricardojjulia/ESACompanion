@@ -45,17 +45,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
     const hasUpperM = /[M]/.test(trimmedInput);
     const sumValid = sum === 30;
     
-    console.log("Password validation:", { input: trimmedInput, appIds, hasUpperM, sum, sumValid, isValidAppId });
-    
     // Manager: needs uppercase M AND sum to 30
     if (hasUpperM && sumValid) {
-      console.log("Validated as MANAGER");
       return { isValid: true, isManager: true };
     }
     
     // Regular user: must use configured APPID
     if (isValidAppId) {
-      console.log("Validated as REGULAR USER (APPID match)");
       return { isValid: true, isManager: false };
     }
     
@@ -74,7 +70,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) =
       setError('Invalid credentials. Use a configured APPID or manager password (M + digits = 30).');
       return;
     }
-    console.log("Calling onAuthenticated with isManager:", validation.isManager);
     setIsValidating(true);
     
     // Pass APPID if regular user

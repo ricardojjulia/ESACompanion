@@ -19,6 +19,8 @@ export interface ClientInteraction {
   status: InteractionStatus;
   createdAt: string;
   appId?: string;
+  engagementId?: string;
+  submittedByAppId?: string;
 }
 
 export interface ClientInfo {
@@ -28,4 +30,5 @@ export interface ClientInfo {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  appId?: string;
 }

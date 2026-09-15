@@ -1,23 +1,40 @@
 import React, { useState } from 'react';
+import { Button } from '@dynatrace/strato-components/buttons';
+import { FormField, Label, Select, TextArea, TextInput } from '@dynatrace/strato-components-preview/forms';
+import { Modal } from '@dynatrace/strato-components-preview/overlays';
 import { ClientInteraction, InteractionType, InteractionStatus } from '../types/client';
+
+interface AccessibleEngagement {
+  id: string;
+  name: string;
+  clientName: string;
+}
 
 interface CreateClientInteractionModalProps {
   onClose: () => void;
   onCreate: (interaction: Omit<ClientInteraction, 'id' | 'createdAt'>) => void;
+  engagements: AccessibleEngagement[];
+  isManager: boolean;
+  interaction?: ClientInteraction;
 }
 
-export const CreateClientInteractionModal: React.FC<CreateClientInteractionModalProps> = ({ onClose, onCreate }) => {
-  const [clientName, setClientName] = useState('');
-  const [contactPerson, setContactPerson] = useState('');
-  const [interactionType, setInteractionType] = useState<InteractionType>('Meeting');
-  const [date, setDate] = useState('');
-  const [notes, setNotes] = useState('');
-  const [actionItems, setActionItems] = useState('');
-  const [status, setStatus] = useState<InteractionStatus>('Scheduled');
+export const CreateClientInteractionModal: React.FC<CreateClientInteractionModalProps> = ({ onClose, onCreate, engagements, isManager, interaction }) => {
+  const [clientName, setClientName] = useState(interaction?.clientName ?? '');
+  const [contactPerson, setContactPerson] = useState(interaction?.contactPerson ?? '');
+  const [interactionType, setInteractionType] = useState<InteractionType>(interaction?.interactionType ?? 'Meeting');
+  const [date, setDate] = useState(interaction?.date ?? '');
+  const [notes, setNotes] = useState(interaction?.notes ?? '');
+  const [actionItems, setActionItems] = useState(
+    Array.isArray(interaction?.actionItems)
+      ? interaction.actionItems.map((item) => item.text).join('\n')
+      : interaction?.actionItems ?? '',
+  );
+  const [status, setStatus] = useState<InteractionStatus>(interaction?.status ?? 'Scheduled');
+  const [engagementId, setEngagementId] = useState(interaction?.engagementId ?? '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientName || !contactPerson || !date) return;
+    if (!clientName || !contactPerson || !date || (!isManager && !engagementId)) return;
 
     onCreate({
       clientName,
@@ -27,226 +44,79 @@ export const CreateClientInteractionModal: React.FC<CreateClientInteractionModal
       notes,
       actionItems,
       status,
+      engagementId: engagementId || undefined,
     });
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.95)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          padding: '40px',
-          borderRadius: '12px',
-          width: '600px',
-          maxWidth: '90vw',
-          maxHeight: '90vh',
-          overflow: 'auto',
-          border: '3px solid #2196f3',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 style={{ marginTop: 0, marginBottom: '24px' }}>New Client Interaction</h2>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-              Client Name *
-            </label>
-            <input
-              type="text"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              placeholder="Company or client name"
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                fontSize: '14px',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-              Contact Person *
-            </label>
-            <input
-              type="text"
-              value={contactPerson}
-              onChange={(e) => setContactPerson(e.target.value)}
-              placeholder="Primary contact name"
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                fontSize: '14px',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-                Interaction Type
-              </label>
-              <select
-                value={interactionType}
-                onChange={(e) => setInteractionType(e.target.value as InteractionType)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  fontSize: '14px',
-                  border: '1px solid #ccc',
-                  borderRadius: '6px',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <option value="Meeting">Meeting</option>
-                <option value="Call">Call</option>
-                <option value="Email">Email</option>
-                <option value="Follow-up">Follow-up</option>
-                <option value="Review">Review</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-                Status
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as InteractionStatus)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  fontSize: '14px',
-                  border: '1px solid #ccc',
-                  borderRadius: '6px',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <option value="Scheduled">Scheduled</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-              Date *
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                fontSize: '14px',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-              Notes
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Meeting agenda, discussion points, outcomes..."
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '10px',
-                fontSize: '14px',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                boxSizing: 'border-box',
-                resize: 'vertical',
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-              Action Items
-            </label>
-            <textarea
-              value={actionItems}
-              onChange={(e) => setActionItems(e.target.value)}
-              placeholder="Follow-up tasks, next steps, deliverables..."
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '10px',
-                fontSize: '14px',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                boxSizing: 'border-box',
-                resize: 'vertical',
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                padding: '10px 20px',
-                fontSize: '14px',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!clientName || !contactPerson || !date}
-              style={{
-                padding: '10px 20px',
-                fontSize: '14px',
-                border: 'none',
-                borderRadius: '6px',
-                backgroundColor: clientName && contactPerson && date ? '#2196f3' : '#ccc',
-                color: '#fff',
-                cursor: clientName && contactPerson && date ? 'pointer' : 'not-allowed',
-              }}
-            >
-              Create Interaction
-            </button>
-          </div>
-        </form>
+    <Modal show title={interaction ? 'Edit Client Interaction' : 'New Client Interaction'} onDismiss={onClose} footer={
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button type="submit" form="create-client-interaction" variant="emphasized" disabled={!clientName || !contactPerson || !date || (!isManager && !engagementId)}>
+          {interaction ? 'Save Interaction' : 'Create Interaction'}
+        </Button>
       </div>
-    </div>
+    }>
+      <form id="create-client-interaction" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <FormField required>
+          <Label>Client Name</Label>
+          <TextInput value={clientName} onChange={setClientName} placeholder="Company or client name" disabled={!isManager} required />
+        </FormField>
+        <FormField required={!isManager}>
+          <Label>Engagement</Label>
+          <Select value={engagementId} onChange={(value) => {
+            const selectedEngagementId = value as string;
+            setEngagementId(selectedEngagementId);
+            const engagement = engagements.find((item) => item.id === selectedEngagementId);
+            if (engagement) setClientName(engagement.clientName);
+          }}>
+            <Select.Content>
+              {isManager && <Select.Option value="">No engagement</Select.Option>}
+              {engagements.map((engagement) => <Select.Option key={engagement.id} value={engagement.id}>{engagement.name} ({engagement.clientName})</Select.Option>)}
+            </Select.Content>
+          </Select>
+        </FormField>
+        <FormField required>
+          <Label>Contact Person</Label>
+          <TextInput value={contactPerson} onChange={setContactPerson} placeholder="Primary contact name" required />
+        </FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <FormField>
+            <Label>Interaction Type</Label>
+            <Select value={interactionType} onChange={(value) => setInteractionType(value as InteractionType)}>
+              <Select.Content>
+                <Select.Option value="Meeting">Meeting</Select.Option>
+                <Select.Option value="Call">Call</Select.Option>
+                <Select.Option value="Email">Email</Select.Option>
+                <Select.Option value="Follow-up">Follow-up</Select.Option>
+                <Select.Option value="Review">Review</Select.Option>
+              </Select.Content>
+            </Select>
+          </FormField>
+          <FormField>
+            <Label>Status</Label>
+            <Select value={status} onChange={(value) => setStatus(value as InteractionStatus)}>
+              <Select.Content>
+                <Select.Option value="Scheduled">Scheduled</Select.Option>
+                <Select.Option value="Completed">Completed</Select.Option>
+                <Select.Option value="Cancelled">Cancelled</Select.Option>
+              </Select.Content>
+            </Select>
+          </FormField>
+        </div>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          Date
+          <input type="date" value={date} onChange={(event) => setDate(event.target.value)} required />
+        </label>
+        <FormField>
+          <Label>Notes</Label>
+          <TextArea value={notes} onChange={setNotes} placeholder="Meeting agenda, discussion points, outcomes..." rows={3} resize="vertical" />
+        </FormField>
+        <FormField>
+          <Label>Action Items</Label>
+          <TextArea value={actionItems} onChange={setActionItems} placeholder="Follow-up tasks, next steps, deliverables..." rows={3} resize="vertical" />
+        </FormField>
+      </form>
+    </Modal>
   );
 };

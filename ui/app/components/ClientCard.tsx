@@ -1,5 +1,9 @@
 import React from 'react';
+import { Button } from '@dynatrace/strato-components/buttons';
 import { Heading } from '@dynatrace/strato-components/typography';
+import { Select } from '@dynatrace/strato-components-preview/forms';
+import { Tooltip } from '@dynatrace/strato-components-preview/overlays';
+import { DeleteIcon, EditIcon } from '@dynatrace/strato-icons';
 import { ClientInteraction, InteractionStatus } from '../types/client';
 
 interface ClientCardProps {
@@ -8,40 +12,15 @@ interface ClientCardProps {
   interactions: ClientInteraction[];
   onUpdateStatus: (id: string, status: InteractionStatus) => void;
   onDelete: (id: string) => void;
+  onEditInteraction?: (interaction: ClientInteraction) => void;
   onEditClient?: () => void;
+  onDeleteClient?: () => void;
+  canEditClient: boolean;
+  canManageInteractions: boolean;
+  isInteractionMutable: (interaction: ClientInteraction) => boolean;
 }
 
-const getStatusColor = (status: InteractionStatus) => {
-  switch (status) {
-    case 'Scheduled':
-      return '#2196f3';
-    case 'Completed':
-      return '#4caf50';
-    case 'Cancelled':
-      return '#757575';
-    default:
-      return '#757575';
-  }
-};
-
-const getInteractionTypeIcon = (type: string) => {
-  switch (type) {
-    case 'Meeting':
-      return '👥';
-    case 'Call':
-      return '📞';
-    case 'Email':
-      return '📧';
-    case 'Follow-up':
-      return '🔄';
-    case 'Review':
-      return '📋';
-    default:
-      return '📝';
-  }
-};
-
-export const ClientCard: React.FC<ClientCardProps> = ({ clientName, clientId, interactions, onUpdateStatus, onDelete, onEditClient }) => {
+export const ClientCard: React.FC<ClientCardProps> = ({ clientName, clientId, interactions, onUpdateStatus, onDelete, onEditInteraction, onEditClient, onDeleteClient, canEditClient, canManageInteractions, isInteractionMutable }) => {
   const sortedInteractions = [...interactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -66,22 +45,15 @@ export const ClientCard: React.FC<ClientCardProps> = ({ clientName, clientId, in
           {clientId && (
             <span style={{ fontSize: '11px', color: 'var(--dt-colors-text-secondary)' }}>• ID: {clientId}</span>
           )}
-          {onEditClient && (
-            <button
-              onClick={onEditClient}
-              title="Edit client"
-              style={{
-                marginLeft: '8px',
-                padding: '4px 8px',
-                fontSize: '12px',
-                border: '1px solid var(--dt-colors-border-container-default)',
-                borderRadius: '4px',
-                backgroundColor: 'var(--dt-colors-surface-default)',
-                cursor: 'pointer'
-              }}
-            >
-              ✏️ Edit
-            </button>
+          {onEditClient && canEditClient && (
+            <Tooltip text="Edit client">
+              <Button aria-label="Edit client" size="condensed" onClick={onEditClient}><EditIcon /></Button>
+            </Tooltip>
+          )}
+          {onDeleteClient && canEditClient && (
+            <Tooltip text="Delete client">
+              <Button aria-label="Delete client" size="condensed" color="critical" onClick={onDeleteClient}><DeleteIcon /></Button>
+            </Tooltip>
           )}
         </div>
         <div style={{ fontSize: '13px', color: 'var(--dt-colors-text-secondary)' }}>
@@ -91,6 +63,11 @@ export const ClientCard: React.FC<ClientCardProps> = ({ clientName, clientId, in
 
       {/* Interactions List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {sortedInteractions.length === 0 && (
+          <div style={{ color: 'var(--dt-colors-text-secondary)', fontSize: '13px' }}>
+            No client interactions yet.
+          </div>
+        )}
         {sortedInteractions.map((interaction) => (
           <div
             key={interaction.id}
@@ -103,7 +80,6 @@ export const ClientCard: React.FC<ClientCardProps> = ({ clientName, clientId, in
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '20px' }}>{getInteractionTypeIcon(interaction.interactionType)}</span>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '14px' }}>
                     {interaction.interactionType} with {interaction.contactPerson}
@@ -118,41 +94,27 @@ export const ClientCard: React.FC<ClientCardProps> = ({ clientName, clientId, in
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <select
-                  value={interaction.status}
-                  onChange={(e) => onUpdateStatus(interaction.id, e.target.value as InteractionStatus)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '12px',
-                    border: '1px solid var(--dt-colors-border-container-default)',
-                    borderRadius: '4px',
-                    backgroundColor: 'var(--dt-colors-surface-default)',
-                    color: getStatusColor(interaction.status),
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="Scheduled">Scheduled</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
-                <button
-                  onClick={() => onDelete(interaction.id)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '12px',
-                    border: '1px solid var(--dt-colors-border-container-default)',
-                    borderRadius: '4px',
-                    backgroundColor: 'transparent',
-                    cursor: 'pointer',
-                    color: '#d32f2f',
-                  }}
-                  title="Delete interaction"
-                >
-                  🗑️
-                </button>
-              </div>
+              {canManageInteractions && (
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <Select aria-label="Interaction status" value={interaction.status} disabled={!isInteractionMutable(interaction)} onChange={(value) => onUpdateStatus(interaction.id, value as InteractionStatus)}>
+                    <Select.Content>
+                      <Select.Option value="Scheduled">Scheduled</Select.Option>
+                      <Select.Option value="Completed">Completed</Select.Option>
+                      <Select.Option value="Cancelled">Cancelled</Select.Option>
+                    </Select.Content>
+                  </Select>
+                  {onEditInteraction && isInteractionMutable(interaction) && (
+                    <Tooltip text="Edit interaction">
+                      <Button aria-label="Edit interaction" size="condensed" onClick={() => onEditInteraction(interaction)}><EditIcon /></Button>
+                    </Tooltip>
+                  )}
+                  {isInteractionMutable(interaction) && (
+                    <Tooltip text="Delete interaction">
+                      <Button aria-label="Delete interaction" size="condensed" color="critical" onClick={() => onDelete(interaction.id)}><DeleteIcon /></Button>
+                    </Tooltip>
+                  )}
+                </div>
+              )}
             </div>
 
             {interaction.notes && (

@@ -1,11 +1,11 @@
 import { Page } from "@dynatrace/strato-components-preview/layouts";
+import { MessageContainer } from "@dynatrace/strato-components-preview/content";
 import React, { useState, useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { Engagements } from "./pages/Engagements";
 import { ClientManagement } from "./pages/ClientManagement";
 import { AnalyticsV2 } from "./pages/AnalyticsV2";
 import { ESAResources } from "./pages/ESAResources";
-import { Reports } from "./pages/Reports";
 import { Header } from "./components/Header";
 import { Home } from "./pages/Home";
 import { SplashScreen } from "./components/SplashScreen";
@@ -36,13 +36,7 @@ export const App = () => {
     }
   }, []);
 
-  // Debug: log when isManager changes
-  useEffect(() => {
-    console.log("Manager state changed:", isManager);
-  }, [isManager]);
-
   const handleAuthentication = (isManagerMode: boolean, appId?: string | null) => {
-    console.log("Authenticating with manager mode:", isManagerMode, "appId:", appId);
     setIsAuthenticated(true);
     setIsManager(isManagerMode);
     setUserAppId(appId || null);
@@ -81,19 +75,18 @@ export const App = () => {
       </Page.Header>
       <Page.Main>
         {showManagerToast && (
-          <div style={{ position: 'fixed', top: 12, right: 12, background: '#0b1220', color: '#64c8ff', border: '1px solid #334155', borderRadius: 8, padding: '8px 12px', zIndex: 1000 }}>
+          <MessageContainer style={{ position: 'fixed', top: 12, right: 12, zIndex: 1000 }}>
             Manager Mode Active
-          </div>
+          </MessageContainer>
         )}
         <Routes>
-          <Route path="/" element={<Home onLogout={handleLogout} isManager={isManager} />} />
+          <Route path="/" element={<Home onLogout={handleLogout} isManager={isManager} userAppId={userAppId} />} />
           <Route path="/engagements" element={<Engagements userAppId={userAppId} isManager={isManager} />} />
           <Route path="/clients" element={<ClientManagement userAppId={userAppId} isManager={isManager} />} />
-          <Route path="/analytics" element={<AnalyticsV2 />} />
+          <Route path="/analytics" element={<AnalyticsV2 userAppId={userAppId} isManager={isManager} />} />
           {isManager && (
             <>
               <Route path="/resources" element={<ESAResources />} />
-              <Route path="/reports" element={<Reports />} />
             </>
           )}
         </Routes>
