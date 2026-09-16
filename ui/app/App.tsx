@@ -1,96 +1,64 @@
-import { Page } from "@dynatrace/strato-components-preview/layouts";
-import { MessageContainer } from "@dynatrace/strato-components-preview/content";
 import React, { useState, useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
-import { Engagements } from "./pages/Engagements";
-import { ClientManagement } from "./pages/ClientManagement";
-import { AnalyticsV2 } from "./pages/AnalyticsV2";
-import { ESAResources } from "./pages/ESAResources";
-import { Header } from "./components/Header";
+import { Projects } from "./pages/Projects";
+import { ProjectDashboard } from "./pages/ProjectDashboard";
+import { Sidebar } from "./components/Sidebar";
 import { Home } from "./pages/Home";
 import { SplashScreen } from "./components/SplashScreen";
 
 export const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isManager, setIsManager] = useState(false);
-  const [userAppId, setUserAppId] = useState<string | null>(null);
-  const [userName, setUserName] = useState("Guest User");
-  const [showManagerToast, setShowManagerToast] = useState(false);
 
-  // Check if user is already authenticated
   useEffect(() => {
     const isAuth = sessionStorage.getItem("esaAuthenticated");
-    const user = sessionStorage.getItem("esaUser");
-    const manager = sessionStorage.getItem("esaManager") === "true";
-    const appId = sessionStorage.getItem("esaAppId");
-
+    const mode = sessionStorage.getItem("esaMode");
     if (isAuth === "true") {
       setIsAuthenticated(true);
-      setIsManager(manager);
-      if (appId) setUserAppId(appId);
-      if (user) {
-        setUserName(user);
-      }
-    } else {
-      setUserName("ESA Admin");
+      setIsManager(mode === "architect");
     }
   }, []);
 
-  const handleAuthentication = (isManagerMode: boolean, appId?: string | null) => {
+  const handleAuthentication = (architectMode: boolean) => {
     setIsAuthenticated(true);
-    setIsManager(isManagerMode);
-    setUserAppId(appId || null);
+    setIsManager(architectMode);
     sessionStorage.setItem("esaAuthenticated", "true");
-    sessionStorage.setItem("esaUser", userName);
-    sessionStorage.setItem("esaManager", String(isManagerMode));
-    if (appId) {
-      sessionStorage.setItem("esaAppId", appId);
-    }
-    if (isManagerMode) {
-      setShowManagerToast(true);
-      setTimeout(() => setShowManagerToast(false), 3000);
-    }
+    sessionStorage.setItem("esaMode", architectMode ? "architect" : "client");
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem("esaAuthenticated");
-    sessionStorage.removeItem("esaUser");
+    sessionStorage.removeItem("esaMode");
     sessionStorage.removeItem("esaManager");
     sessionStorage.removeItem("esaAppId");
     setIsAuthenticated(false);
     setIsManager(false);
-    setUserAppId(null);
   };
 
-  // Show splash screen if not authenticated
   if (!isAuthenticated) {
-    return <SplashScreen onAuthenticated={handleAuthentication} userName={userName} />;
+    return <SplashScreen onAuthenticated={handleAuthentication} />;
   }
 
-  // Show main app if authenticated
   return (
-    <Page>
-      <Page.Header>
-        <Header onLogout={handleLogout} userName={userName} isManager={isManager} />
-      </Page.Header>
-      <Page.Main>
-        {showManagerToast && (
-          <MessageContainer style={{ position: 'fixed', top: 12, right: 12, zIndex: 1000 }}>
-            Manager Mode Active
-          </MessageContainer>
-        )}
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        overflow: "hidden",
+        backgroundColor: "var(--dt-colors-surface-container-default)",
+      }}
+    >
+      <Sidebar isManager={isManager} onLogout={handleLogout} />
+      <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
         <Routes>
-          <Route path="/" element={<Home onLogout={handleLogout} isManager={isManager} userAppId={userAppId} />} />
-          <Route path="/engagements" element={<Engagements userAppId={userAppId} isManager={isManager} />} />
-          <Route path="/clients" element={<ClientManagement userAppId={userAppId} isManager={isManager} />} />
-          <Route path="/analytics" element={<AnalyticsV2 userAppId={userAppId} isManager={isManager} />} />
-          {isManager && (
-            <>
-              <Route path="/resources" element={<ESAResources />} />
-            </>
-          )}
+          <Route
+            path="/"
+            element={<Home onLogout={handleLogout} isManager={isManager} userAppId={null} />}
+          />
+          <Route path="/projects" element={<Projects isManager={isManager} />} />
+          <Route path="/dashboard" element={<ProjectDashboard isManager={isManager} />} />
         </Routes>
-      </Page.Main>
-    </Page>
+      </div>
+    </div>
   );
 };

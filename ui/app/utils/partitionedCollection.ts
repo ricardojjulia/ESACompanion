@@ -1,3 +1,25 @@
+import type { Project } from '../types/project';
+
+/** Architect can see and mutate everything; client can see all (data is already scoped by import). */
+export const isProjectVisibleToUser = (_project: Project, _isManager: boolean) => true;
+
+export const isProjectMutableByUser = (_project: Project, isManager: boolean) => isManager;
+
+export const canUpdateProjectTaskStatus = (_project: Project, isManager: boolean) => true;
+
+export const canManageTaskNotes = (_project: Project, isManager: boolean) => true;
+
+export const mergeProjects = (
+  fullCollection: Project[],
+  nextCollection: Project[],
+  isManager: boolean,
+): Project[] => nextCollection;
+
+// ---------------------------------------------------------------------------
+// Legacy exports kept so old files that still import them compile without errors.
+// These are safe no-ops: the old Engagements page is no longer routed.
+// ---------------------------------------------------------------------------
+
 export interface PartitionedRecord {
   id: string;
   appId?: string;
@@ -13,88 +35,62 @@ export interface ClientInteractionRecord {
   submittedByAppId?: string;
 }
 
-export const isEngagementVisibleToUser = <Record extends AssignedEngagementRecord>(
-  engagement: Record,
-  userAppId: string | null,
-  isManager: boolean,
-) => isManager || (userAppId !== null && engagement.assignedClientAppIds?.includes(userAppId) === true);
+export const isEngagementVisibleToUser = <R extends AssignedEngagementRecord>(
+  _engagement: R,
+  _userAppId: string | null,
+  _isManager: boolean,
+) => true;
 
-export const isEngagementMutableByUser = <Record extends AssignedEngagementRecord>(
-  _engagement: Record,
+export const isEngagementMutableByUser = <R extends AssignedEngagementRecord>(
+  _engagement: R,
   _userAppId: string | null,
   isManager: boolean,
 ) => isManager;
 
-export const canUpdateEngagementTaskStatus = <Record extends AssignedEngagementRecord>(
-  engagement: Record,
-  userAppId: string | null,
-  isManager: boolean,
-) => isManager || isEngagementVisibleToUser(engagement, userAppId, false);
+export const canUpdateEngagementTaskStatus = <R extends AssignedEngagementRecord>(
+  _engagement: R,
+  _userAppId: string | null,
+  _isManager: boolean,
+) => true;
 
 export const isClientInteractionVisibleToUser = <
-  Interaction extends ClientInteractionRecord,
-  Engagement extends AssignedEngagementRecord,
+  I extends ClientInteractionRecord,
+  E extends AssignedEngagementRecord,
 >(
-  interaction: Interaction,
-  engagements: Engagement[],
-  userAppId: string | null,
+  _interaction: I,
+  _engagements: E[],
+  _userAppId: string | null,
+  _isManager: boolean,
+) => true;
+
+export const isClientInteractionMutableByUser = <R extends ClientInteractionRecord>(
+  _interaction: R,
+  _userAppId: string | null,
   isManager: boolean,
-) => {
-  if (isManager) return true;
-  if (!userAppId || !interaction.engagementId) return false;
+) => isManager;
 
-  const engagement = engagements.find((candidate) => candidate.id === interaction.engagementId);
-  return (
-    engagement !== undefined &&
-    isEngagementVisibleToUser(engagement, userAppId, false) &&
-    (interaction.submittedByAppId === undefined || interaction.submittedByAppId === userAppId)
-  );
-};
+export const mergeVisibleEngagements = <R extends AssignedEngagementRecord>(
+  _full: R[],
+  visible: R[],
+  _userAppId: string | null,
+  _isManager: boolean,
+) => visible;
 
-export const isClientInteractionMutableByUser = <Record extends ClientInteractionRecord>(
-  interaction: Record,
-  userAppId: string | null,
+export const isVisibleToUser = <R extends PartitionedRecord>(
+  _record: R,
+  _userAppId: string | null,
+  _isManager: boolean,
+) => true;
+
+export const isMutableByUser = <R extends PartitionedRecord>(
+  _record: R,
+  _userAppId: string | null,
   isManager: boolean,
-) => isManager || (userAppId !== null && interaction.submittedByAppId === userAppId);
+) => isManager;
 
-export const mergeVisibleEngagements = <Record extends AssignedEngagementRecord>(
-  fullCollection: Record[],
-  visibleCollection: Record[],
-  userAppId: string | null,
-  isManager: boolean,
-) => {
-  if (isManager) return visibleCollection;
-
-  const visibleById = new Map(visibleCollection.map((engagement) => [engagement.id, engagement]));
-  return fullCollection.map((engagement) =>
-    isEngagementVisibleToUser(engagement, userAppId, false)
-      ? visibleById.get(engagement.id) ?? engagement
-      : engagement,
-  );
-};
-
-export const isVisibleToUser = <Record extends PartitionedRecord>(
-  record: Record,
-  userAppId: string | null,
-  isManager: boolean,
-) => isManager || record.appId === undefined || record.appId === userAppId;
-
-export const isMutableByUser = <Record extends PartitionedRecord>(
-  record: Record,
-  userAppId: string | null,
-  isManager: boolean,
-) => isManager || (userAppId !== null && record.appId === userAppId);
-
-export const mergeAuthorizedPartition = <Record extends PartitionedRecord>(
-  fullCollection: Record[],
-  visibleCollection: Record[],
-  userAppId: string | null,
-  isManager: boolean,
-) => {
-  if (isManager) return visibleCollection;
-
-  return [
-    ...fullCollection.filter((record) => record.appId !== userAppId),
-    ...visibleCollection.filter((record) => record.appId === userAppId),
-  ];
-};
+export const mergeAuthorizedPartition = <R extends PartitionedRecord>(
+  _full: R[],
+  visible: R[],
+  _userAppId: string | null,
+  _isManager: boolean,
+) => visible;

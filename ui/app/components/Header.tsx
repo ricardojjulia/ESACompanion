@@ -15,25 +15,17 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, userName, isManager })
     <AppHeader>
       <AppHeader.NavItems>
         <AppHeader.AppNavLink as={Link} to="/" />
-        <AppHeader.NavItem as={Link} to="/engagements">
-          Engagements
-        </AppHeader.NavItem>
-        <AppHeader.NavItem as={Link} to="/clients">
-          Client Updates
-        </AppHeader.NavItem>
-        <AppHeader.NavItem as={Link} to="/analytics">
-          Analytics
-        </AppHeader.NavItem>
         {isManager && (
-          <AppHeader.NavItem as={Link} to="/resources">
-            ESA Resources
+          <AppHeader.NavItem as={Link} to="/projects">
+            Project Management
           </AppHeader.NavItem>
         )}
+        <AppHeader.NavItem as={Link} to="/dashboard">
+          Project Dashboard
+        </AppHeader.NavItem>
       </AppHeader.NavItems>
       <AppHeader.ActionItems>
-        {userName && (
-          <Text>{userName}</Text>
-        )}
+        {userName && <Text>{userName}</Text>}
         <Button variant="default" onClick={onLogout}>
           Logout
         </Button>

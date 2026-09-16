@@ -1,108 +1,168 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface SplashScreenProps {
-  onAuthenticated: (isManager: boolean, appId?: string | null) => void;
-  userName?: string; // optional, passed by App.tsx
+  onAuthenticated: (isManager: boolean) => void;
+  userName?: string;
 }
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onAuthenticated }) => {
+  const [mode, setMode] = useState<'choose' | 'architect'>('choose');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
 
-  const getUserEmail = () => {
-    try {
-      const w = window as any;
-      if (w.dt?.user?.email) return String(w.dt.user.email);
-      if (w.__DT_USER__?.email) return String(w.__DT_USER__.email);
-      const stored = localStorage.getItem('esa-user-email');
-      if (stored) return stored;
-    } catch {}
-    return 'Signed in';
-  };
-  const userEmail = getUserEmail();
-
-  const validatePassword = (input: string): { isValid: boolean; isManager: boolean } => {
-    const trimmedInput = input.trim();
-    
-    // Load configured users (APPIDs) from localStorage
-    let users: any[] = [];
-    try {
-      const stored = localStorage.getItem('esa-users');
-      users = stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      users = [];
-    }
-
-    const appIds = users.map((u: any) => u.appId.trim());
-    
-    // Check if input matches any configured APPID (case-sensitive exact match)
-    const isValidAppId = appIds.includes(trimmedInput);
-    
-    const digits = trimmedInput.match(/\d/g);
+  const validateArchitectPassword = (input: string): boolean => {
+    const trimmed = input.trim();
+    const digits = trimmed.match(/\d/g);
     const hasDigits = digits && digits.length > 0;
     const sum = hasDigits ? digits.reduce((acc, d) => acc + parseInt(d, 10), 0) : 0;
-    const hasUpperM = /[M]/.test(trimmedInput);
-    const sumValid = sum === 30;
-    
-    // Manager: needs uppercase M AND sum to 30
-    if (hasUpperM && sumValid) {
-      return { isValid: true, isManager: true };
-    }
-    
-    // Regular user: must use configured APPID
-    if (isValidAppId) {
-      return { isValid: true, isManager: false };
-    }
-    
-    return { isValid: false, isManager: false };
+    return /[M]/.test(trimmed) && sum === 30;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleArchitectSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!password) {
-      setError('Please enter a password');
-      return;
-    }
-    const validation = validatePassword(password);
-    if (!validation.isValid) {
-      setError('Invalid credentials. Use a configured APPID or manager password (M + digits = 30).');
+    if (!password) { setError('Please enter the architect password'); return; }
+    if (!validateArchitectPassword(password)) {
+      setError('Invalid password. Hint: uppercase M + digits that sum to 30.');
       return;
     }
     setIsValidating(true);
-    
-    // Pass APPID if regular user
-    const appId = !validation.isManager ? password.trim() : null;
-    
-    setTimeout(() => onAuthenticated(validation.isManager, appId), 800);
+    setTimeout(() => onAuthenticated(true), 800);
+  };
+
+  const handleClientAccess = () => {
+    setIsValidating(true);
+    setTimeout(() => onAuthenticated(false), 600);
+  };
+
+  const cardStyle: React.CSSProperties = {
+    width: '420px',
+    background: '#0b1220',
+    border: '1px solid #334155',
+    borderRadius: '12px',
+    padding: '32px 28px',
+    boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: '10px',
+    fontWeight: 700,
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    marginBottom: '6px',
   };
 
   return (
-    <div style={{ width: '100vw', height: '100vh', backgroundColor: '#0a0e27', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: '420px', background: '#0b1220', border: '1px solid #334155', borderRadius: '12px', padding: '24px', boxShadow: '0 12px 40px rgba(0,0,0,0.35)' }}>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {/* Visually hidden username field to satisfy accessibility guidance */}
-          <input type="text" name="username" autoComplete="username" style={{ position: 'absolute', left: '-9999px', width: 0, height: 0, opacity: 0 }} aria-hidden="true" tabIndex={-1} />
-          <div style={{ fontWeight: 600, color: '#e2e8f0', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Security Password</div>
-          <input
-            type="password"
-            autoComplete="new-password"
-            placeholder="Enter digits that sum to 30"
-            value={password}
-            onChange={(e) => { setPassword(e.target.value); setError(''); }}
-            disabled={isValidating}
-            style={{ width: '100%', padding: '8px 12px', height: '34px', backgroundColor: '#0b1220', border: error ? '2px solid #ef4444' : '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', fontSize: '12px' }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = '#64748b'; }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = error ? '#ef4444' : '#334155'; }}
-          />
-          {error && <div style={{ fontSize: '12px', color: '#ff6666' }}>{error}</div>}
-          <button type="submit" disabled={isValidating} style={{ height: '44px', fontSize: '16px', fontWeight: 600, backgroundColor: isValidating ? 'rgba(100, 200, 255, 0.5)' : '#64c8ff', color: '#000', border: 'none', borderRadius: '8px', cursor: isValidating ? 'not-allowed' : 'pointer' }}>
-            {isValidating ? 'Authenticating...' : 'Enter System'}
-          </button>
-        </form>
+    <div style={{ width: '100vw', height: '100vh', backgroundColor: '#0a0e27', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
+      {/* Logo / title */}
+      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+        <div style={{ fontSize: '22px', fontWeight: 700, color: '#e2e8f0', letterSpacing: '0.5px' }}>ESA Companion</div>
+        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Project Management Platform</div>
+      </div>
+
+      <div style={cardStyle}>
+        {mode === 'choose' ? (
+          <>
+            <div>
+              <div style={{ ...labelStyle, textAlign: 'center' }}>Select your role</div>
+              <div style={{ color: '#94a3b8', fontSize: '12px', textAlign: 'center' }}>How are you accessing this application?</div>
+            </div>
+
+            {/* Architect button */}
+            <button
+              disabled={isValidating}
+              onClick={() => setMode('architect')}
+              style={{
+                width: '100%',
+                padding: '16px',
+                backgroundColor: 'transparent',
+                border: '1px solid #3b82f6',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(59,130,246,0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <div style={{ fontSize: '15px', fontWeight: 600, color: '#93c5fd', marginBottom: '4px' }}>Architect Login</div>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>Create and manage projects, tasks, and exports</div>
+            </button>
+
+            {/* Client button */}
+            <button
+              disabled={isValidating}
+              onClick={handleClientAccess}
+              style={{
+                width: '100%',
+                padding: '16px',
+                backgroundColor: 'transparent',
+                border: '1px solid #10b981',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <div style={{ fontSize: '15px', fontWeight: 600, color: '#6ee7b7', marginBottom: '4px' }}>Client Access</div>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>View projects, update status, and add notes</div>
+            </button>
+
+            {isValidating && (
+              <div style={{ textAlign: 'center', color: '#64c8ff', fontSize: '13px' }}>Entering…</div>
+            )}
+          </>
+        ) : (
+          <>
+            <div>
+              <div style={{ ...labelStyle }}>Architect Authentication</div>
+              <div style={{ color: '#94a3b8', fontSize: '12px' }}>Enter your architect password to continue</div>
+            </div>
+
+            <form onSubmit={handleArchitectSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Hidden username for accessibility */}
+              <input type="text" name="username" autoComplete="username" style={{ position: 'absolute', left: '-9999px', width: 0, height: 0, opacity: 0 }} aria-hidden="true" tabIndex={-1} />
+              <div>
+                <div style={labelStyle}>Password</div>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="Architect password"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  disabled={isValidating}
+                  autoFocus
+                  style={{ width: '100%', padding: '10px 12px', backgroundColor: '#0a0e1f', border: error ? '1px solid #ef4444' : '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', fontSize: '14px', boxSizing: 'border-box' }}
+                />
+              </div>
+              {error && <div style={{ fontSize: '12px', color: '#f87171' }}>{error}</div>}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setMode('choose'); setPassword(''); setError(''); }}
+                  style={{ flex: 1, height: '40px', backgroundColor: 'transparent', border: '1px solid #334155', borderRadius: '6px', color: '#94a3b8', cursor: 'pointer', fontSize: '13px' }}
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={isValidating}
+                  style={{ flex: 2, height: '40px', backgroundColor: isValidating ? 'rgba(59,130,246,0.4)' : '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: isValidating ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 600 }}
+                >
+                  {isValidating ? 'Authenticating…' : 'Login as Architect'}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );
 };
-// Minimal, clean SplashScreen without extra JSX fragments
